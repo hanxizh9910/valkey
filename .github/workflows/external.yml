@@ -2,14 +2,16 @@ name: External Server Tests
 
 on:
   pull_request:
+    branches:
+      - '**'
     paths-ignore:
       - '*.md'
-      - '**/*.md'
       - 'COPYING'
   push:
+    branches:
+      - '**'
     paths-ignore:
       - '*.md'
-      - '**/*.md'
       - 'COPYING'
   schedule:
     - cron: '0 2 * * *'
