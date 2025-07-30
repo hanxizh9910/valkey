@@ -3,18 +3,10 @@ name: CI
 on:
   push:
     paths-ignore:
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'SECURITY.md'
-      - 'GOVERNANCE.md'
-      - 'COPYING'
+      - '**/*.md'
   pull_request:
     paths-ignore:
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'SECURITY.md'
-      - 'GOVERNANCE.md'
-      - 'COPYING'
+      - '**/*.md'
 
 concurrency:
   group: ci-${{ github.head_ref || github.ref }}
