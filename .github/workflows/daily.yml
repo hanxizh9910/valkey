@@ -7,11 +7,9 @@ on:
       - "[0-9].[0-9]"
       - "unstable"
     paths-ignore:
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'SECURITY.md'
-      - 'GOVERNANCE.md'
-      - 'COPYING'
+      - '**/*.md'
+      - '**/00-RELEASENOTES'
+      - '**/COPYING'
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:

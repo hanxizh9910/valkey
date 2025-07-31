@@ -1,20 +1,16 @@
 name: External Server Tests
 
 on:
-  pull_request:
-    paths-ignore:
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'SECURITY.md'
-      - 'GOVERNANCE.md'
-      - 'COPYING'
   push:
     paths-ignore:
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'SECURITY.md'
-      - 'GOVERNANCE.md'
-      - 'COPYING'
+      - '**/*.md'
+      - '**/00-RELEASENOTES'
+      - '**/COPYING'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - '**/00-RELEASENOTES'
+      - '**/COPYING'
   schedule:
     - cron: '0 2 * * *'
 
