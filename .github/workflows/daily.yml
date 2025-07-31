@@ -8,6 +8,8 @@ on:
       - "unstable"
     paths-ignore:
       - '**/*.md'
+      - '**/00-RELEASENOTES'
+      - '**/COPYING'
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
