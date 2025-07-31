@@ -200,5 +200,3 @@ jobs:
           echo "${{ steps.clang-format.outputs.diff }}" | base64 --decode
           exit 1
         shell: bash
-
-        
