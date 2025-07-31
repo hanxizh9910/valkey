@@ -7,11 +7,7 @@ name: Spellcheck
 
 on:
   push:
-    paths-ignore:
-      - '**/*.md'
   pull_request:
-    paths-ignore:
-      - '**/*.md'
 
 concurrency:
   group: spellcheck-${{ github.head_ref || github.ref }}
