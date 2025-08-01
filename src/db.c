@@ -2859,4 +2859,3 @@ int bitfieldGetKeys(struct serverCommand *cmd, robj **argv, int argc, getKeysRes
     }
     return 1;
 }
-
