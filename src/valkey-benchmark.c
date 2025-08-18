@@ -1160,12 +1160,12 @@ static void showLatencyReport(void) {
         printf("  latency summary (msec):\n");
         printf("    %9s %9s %9s %9s %9s %9s\n", "avg", "min", "p50", "p95", "p99", "max");
         printf("    %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f\n", avg, p0, p50, p95, p99, p100);
-        
+
         /* RPS bottleneck detection */
         if (config.rps > 0) {
             float target_rps = (float)config.rps;
-            float threshold = target_rps * 0.9f;  /* 90% threshold */
-            
+            float threshold = target_rps * 0.9f; /* 90% threshold */
+
             if (reqpersec < threshold) {
                 printf("\n  RPS Analysis:\n");
                 printf("    Target RPS: %.0f\n", target_rps);
