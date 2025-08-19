@@ -1161,18 +1161,28 @@ static void showLatencyReport(void) {
         printf("    %9s %9s %9s %9s %9s %9s\n", "avg", "min", "p50", "p95", "p99", "max");
         printf("    %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f\n", avg, p0, p50, p95, p99, p100);
 
-        /* RPS bottleneck detection */
+        /* RPS analysis - always show when --rps is used */
         if (config.rps > 0) {
             float target_rps = (float)config.rps;
-            float threshold = target_rps * 0.9f; /* 90% threshold */
+            float threshold_99 = target_rps * 0.99f; /* 99% threshold */
+            float threshold_90 = target_rps * 0.90f; /* 90% threshold */
+            float achievement_pct = (reqpersec / target_rps) * 100.0f;
 
-            if (reqpersec < threshold) {
-                printf("\n  RPS Analysis:\n");
-                printf("    Target RPS: %.0f\n", target_rps);
-                printf("    Actual RPS: %.2f\n", reqpersec);
-                printf("    Status: BOTTLENECK DETECTED\n");
-                printf("    The benchmark could not achieve the target RPS.\n");
+            printf("\n  RPS Analysis:\n");
+            printf("    Target RPS: %.0f\n", target_rps);
+            printf("    Actual RPS: %.2f (%.1f%% of target)\n", reqpersec, achievement_pct);
+            
+            if (reqpersec < threshold_90) {
+                printf("    Status: SEVERE BOTTLENECK DETECTED\n");
+                printf("    Performance is significantly below target (< 90%%).\n");
                 printf("    This indicates either client or server limitations.\n");
+            } else if (reqpersec < threshold_99) {
+                printf("    Status: BOTTLENECK DETECTED\n");
+                printf("    Performance is below optimal target (< 99%%).\n");
+                printf("    This indicates either client or server limitations.\n");
+            } else {
+                printf("    Status: GOOD PERFORMANCE\n");
+                printf("    Successfully achieved target RPS.\n");
             }
         }
     } else if (config.csv) {
