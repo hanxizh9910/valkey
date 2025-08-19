@@ -1171,7 +1171,7 @@ static void showLatencyReport(void) {
             printf("\n  RPS Analysis:\n");
             printf("    Target RPS: %.0f\n", target_rps);
             printf("    Actual RPS: %.2f (%.1f%% of target)\n", reqpersec, achievement_pct);
-            
+
             if (reqpersec < threshold_90) {
                 printf("    Status: SEVERE BOTTLENECK DETECTED\n");
                 printf("    Performance is significantly below target (< 90%%).\n");
