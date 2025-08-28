@@ -1277,8 +1277,8 @@ static void benchmarkSequence(const char *title, char *cmd, int len, int seqlen)
              &config.current_sec_latency_histogram);     // Pointer to initialise
 
     if (config.rps > 0) {
-        hdr_init(1,                    // Min RPS: 1
-                 1000000,              // Max RPS: 1M
+        hdr_init(1,       // Min RPS: 1
+                 1000000, // Max RPS: 1M
                  config.precision,
                  &config.rps_histogram);
         config.last_rps_sample_time = 0;
@@ -1988,22 +1988,22 @@ usage:
 
 static void sampleRPS(void) {
     if (config.rps <= 0) return;
-    
+
     long long current_time = mstime();
     int current_requests = atomic_load_explicit(&config.requests_finished, memory_order_relaxed);
-    
+
     // Sample every 1000ms (1 second)
     if (current_time - config.last_rps_sample_time >= 1000) {
-        if (config.last_rps_sample_time > 0) {  // Skip first sample
+        if (config.last_rps_sample_time > 0) { // Skip first sample
             double time_diff_sec = (current_time - config.last_rps_sample_time) / 1000.0;
             double requests_diff = current_requests - config.last_rps_sample_requests;
             double current_rps = requests_diff / time_diff_sec;
-            
-            if (current_rps >= 1.0) {  // Only record valid RPS values
+
+            if (current_rps >= 1.0) { // Only record valid RPS values
                 hdr_record_value(config.rps_histogram, (long)current_rps);
             }
         }
-        
+
         config.last_rps_sample_time = current_time;
         config.last_rps_sample_requests = current_requests;
     }
