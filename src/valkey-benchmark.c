@@ -136,9 +136,9 @@ static struct config {
     struct serverConfig *server_config;
     struct hdr_histogram *latency_histogram;
     struct hdr_histogram *current_sec_latency_histogram;
-    struct hdr_histogram *rps_histogram;  
-    long long last_rps_sample_time;    
-    int last_rps_sample_requests;      
+    struct hdr_histogram *rps_histogram;
+    long long last_rps_sample_time;
+    int last_rps_sample_requests;
     _Atomic int is_fetching_slots;
     _Atomic int is_updating_slots;
     _Atomic int slots_last_update;
@@ -1180,15 +1180,15 @@ static void showLatencyReport(void) {
                 const float rps_p50 = hdr_value_at_percentile(config.rps_histogram, 50.0);
                 // const float rps_p90 = hdr_value_at_percentile(config.rps_histogram, 90.0);
                 // const float rps_p99 = hdr_value_at_percentile(config.rps_histogram, 99.0);
-                
+
                 printf("    RPS Performance Guarantees:\n");
-                printf("      99%% of time: RPS ≥ %.0f (%.1f%% of target)\n", 
-                       rps_p1, (rps_p1/target_rps)*100);
-                printf("      90%% of time: RPS ≥ %.0f (%.1f%% of target)\n", 
-                       rps_p10, (rps_p10/target_rps)*100);
-                printf("      50%% of time: RPS ≥ %.0f (%.1f%% of target)\n", 
-                       rps_p50, (rps_p50/target_rps)*100);
-                
+                printf("      99%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
+                       rps_p1, (rps_p1 / target_rps) * 100);
+                printf("      90%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
+                       rps_p10, (rps_p10 / target_rps) * 100);
+                printf("      50%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
+                       rps_p50, (rps_p50 / target_rps) * 100);
+
                 // Bottleneck analysis using P1 (99% of time achieved this or better)
                 if (rps_p1 >= 0.99 * target_rps) {
                     printf("    Status: GOOD PERFORMANCE\n");
