@@ -627,7 +627,42 @@ start_server {tags {"hashexpire"}} {
          assert_error {ERR numfields should be greater than 0 and match the provided number of fields} {r HSETEX myhash PX 100 FIELDS 1 field1 val1 extra}
     } 
 
+    ## NX/XX key-level tests
 
+    test {HSETEX NX - non-existing key creates the key} {
+        r FLUSHALL
+        set res [r HSETEX myhash NX FIELDS 2 f1 v1 f2 v2]
+        assert_equal 1 $res
+        assert_equal v1 [r HGET myhash f1]
+        assert_equal v2 [r HGET myhash f2]
+    }
+
+    test {HSETEX NX - existing key blocked} {
+        r FLUSHALL
+        r HSET myhash f1 v1
+        set res [r HSETEX myhash NX FIELDS 2 f1 new1 f2 new2]
+        assert_equal 0 $res
+        assert_equal v1 [r HGET myhash f1]
+        assert_equal 0 [r HEXISTS myhash f2]
+    }
+
+    test {HSETEX XX - existing key updates fields} {
+        r FLUSHALL
+        r HSET myhash f1 v1 f2 v2
+        set res [r HSETEX myhash XX FIELDS 2 f1 new1 f2 new2]
+        assert_equal 1 $res
+        assert_equal new1 [r HGET myhash f1]
+        assert_equal new2 [r HGET myhash f2]
+    }
+
+    test {HSETEX XX - non-existing key blocked} {
+        r FLUSHALL
+        set res [r HSETEX myhash XX FIELDS 2 f1 v1 f2 v2]
+        assert_equal 0 $res
+        assert_equal 0 [r HEXISTS myhash f1]
+        assert_equal 0 [r HEXISTS myhash f2]
+    }
+    
     ## FNX/FXX
 
     # hsetex throws ERR *, it shouldn't
