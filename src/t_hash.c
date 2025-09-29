@@ -1209,6 +1209,24 @@ void hsetexCommand(client *c) {
     if (checkType(c, o, OBJ_HASH))
         return;
 
+    /* Check NX/XX key-level conditions before creating a new object */
+    if ((flags & ARGS_SET_NX) && o != NULL) {
+        addReply(c, shared.czero); // NX fails if key exists
+        return;
+    }
+
+    if ((flags & ARGS_SET_XX) && o == NULL) {
+        addReply(c, shared.czero); // XX fails if key does not exist
+        return;
+    }
+
+    if (o == NULL) {
+        o = createHashObject();
+        dbAdd(c->db, c->argv[1], &o);
+    }
+
+    bool has_volatile_fields = hashTypeHasVolatileFields(o);
+
     /* Handle parsing and calculating the expiration time. */
     if (flags & ARGS_KEEPTTL)
         set_flags |= HASH_SET_KEEP_EXPIRY;

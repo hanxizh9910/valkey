@@ -4316,6 +4316,8 @@ keySpec HSETEX_Keyspecs[1] = {
 struct COMMAND_ARG HSETEX_fields_condition_Subargs[] = {
 {MAKE_ARG("fnx",ARG_TYPE_PURE_TOKEN,-1,"FNX",NULL,NULL,CMD_ARG_NONE,0,NULL)},
 {MAKE_ARG("fxx",ARG_TYPE_PURE_TOKEN,-1,"FXX",NULL,NULL,CMD_ARG_NONE,0,NULL)},
+{MAKE_ARG("nx",ARG_TYPE_PURE_TOKEN,-1,"NX",NULL,NULL,CMD_ARG_NONE,0,NULL)},
+{MAKE_ARG("xx",ARG_TYPE_PURE_TOKEN,-1,"XX",NULL,NULL,CMD_ARG_NONE,0,NULL)},
 };
 
 /* HSETEX expiration argument table */
@@ -4342,7 +4344,7 @@ struct COMMAND_ARG HSETEX_fields_Subargs[] = {
 /* HSETEX argument table */
 struct COMMAND_ARG HSETEX_Args[] = {
 {MAKE_ARG("key",ARG_TYPE_KEY,0,NULL,NULL,NULL,CMD_ARG_NONE,0,NULL)},
-{MAKE_ARG("fields-condition",ARG_TYPE_ONEOF,-1,NULL,NULL,NULL,CMD_ARG_OPTIONAL,2,NULL),.subargs=HSETEX_fields_condition_Subargs},
+{MAKE_ARG("fields-condition",ARG_TYPE_ONEOF,-1,NULL,NULL,NULL,CMD_ARG_OPTIONAL,4,NULL),.subargs=HSETEX_fields_condition_Subargs},
 {MAKE_ARG("expiration",ARG_TYPE_ONEOF,-1,NULL,NULL,NULL,CMD_ARG_OPTIONAL,5,NULL),.subargs=HSETEX_expiration_Subargs},
 {MAKE_ARG("fields",ARG_TYPE_BLOCK,-1,"FIELDS",NULL,NULL,CMD_ARG_NONE,2,NULL),.subargs=HSETEX_fields_Subargs},
 };
