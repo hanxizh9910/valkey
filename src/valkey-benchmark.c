@@ -1173,13 +1173,11 @@ static void showLatencyReport(void) {
             printf("    Target RPS: %.0f\n", target_rps);
             printf("    Actual RPS: %.2f (%.1f%% of target)\n", reqpersec, achievement_pct);
 
-            // ADD RPS PERCENTILE ANALYSIS
+            /* ADD RPS PERCENTILE ANALYSIS */ 
             if (config.rps_histogram && config.rps_histogram->total_count > 0) {
                 const float rps_p1 = hdr_value_at_percentile(config.rps_histogram, 1.0);
                 const float rps_p10 = hdr_value_at_percentile(config.rps_histogram, 10.0);
                 const float rps_p50 = hdr_value_at_percentile(config.rps_histogram, 50.0);
-                // const float rps_p90 = hdr_value_at_percentile(config.rps_histogram, 90.0);
-                // const float rps_p99 = hdr_value_at_percentile(config.rps_histogram, 99.0);
 
                 printf("    RPS Performance Guarantees:\n");
                 printf("      99%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
@@ -1189,7 +1187,7 @@ static void showLatencyReport(void) {
                 printf("      50%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
                        rps_p50, (rps_p50 / target_rps) * 100);
 
-                // Bottleneck analysis using P1 (99% of time achieved this or better)
+                /* Bottleneck analysis using P1 (99% of time achieved this or better) */ 
                 if (rps_p1 >= 0.99 * target_rps) {
                     printf("    Status: GOOD PERFORMANCE\n");
                     printf("    99%% of time achieved 99%% of target RPS.\n");
@@ -1201,7 +1199,7 @@ static void showLatencyReport(void) {
                     printf("    Performance significantly below target.\n");
                 }
             } else {
-                // Fallback to original average-based analysis
+                /* Fallback to original average-based analysis */
                 if (reqpersec < target_rps * 0.90f) {
                     printf("    Status: SEVERE BOTTLENECK DETECTED\n");
                 } else if (reqpersec < target_rps * 0.99f) {
