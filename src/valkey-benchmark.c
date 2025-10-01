@@ -1173,7 +1173,7 @@ static void showLatencyReport(void) {
             printf("    Target RPS: %.0f\n", target_rps);
             printf("    Actual RPS: %.2f (%.1f%% of target)\n", reqpersec, achievement_pct);
 
-            /* ADD RPS PERCENTILE ANALYSIS */ 
+            /* ADD RPS PERCENTILE ANALYSIS */
             if (config.rps_histogram && config.rps_histogram->total_count > 0) {
                 const float rps_p1 = hdr_value_at_percentile(config.rps_histogram, 1.0);
                 const float rps_p10 = hdr_value_at_percentile(config.rps_histogram, 10.0);
@@ -1187,7 +1187,7 @@ static void showLatencyReport(void) {
                 printf("      50%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
                        rps_p50, (rps_p50 / target_rps) * 100);
 
-                /* Bottleneck analysis using P1 (99% of time achieved this or better) */ 
+                /* Bottleneck analysis using P1 (99% of time achieved this or better) */
                 if (rps_p1 < 0.90 * target_rps) {
                     printf("    Status: SEVERE BOTTLENECK DETECTED\n");
                 } else if (rps_p1 < 0.99 * target_rps) {
