@@ -1174,9 +1174,9 @@ static void showRPSReport(void) {
     if (config.rps_histogram && config.rps_histogram->total_count > 0) {
         float target_rps = (float)config.rps;
         printf("\nRPS Percentiles:\n");
-        printf("  P50: %lld\n", hdr_value_at_percentile(config.rps_histogram, 50.0));
-        printf("  P95: %lld\n", hdr_value_at_percentile(config.rps_histogram, 95.0));
-        printf("  P99: %lld\n", hdr_value_at_percentile(config.rps_histogram, 99.0));
+        printf("  P50: %.0f\n", (double)hdr_value_at_percentile(config.rps_histogram, 50.0));
+        printf("  P95: %.0f\n", (double)hdr_value_at_percentile(config.rps_histogram, 95.0));
+        printf("  P99: %.0f\n", (double)hdr_value_at_percentile(config.rps_histogram, 99.0));
 
         // Optional bottleneck analysis
         float p1 = hdr_value_at_percentile(config.rps_histogram, 1.0);
@@ -1951,7 +1951,6 @@ usage:
         "                         incr counter ';' exec\n\n");
     exit(exit_status);
 }
-
 
 long long showThroughput(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     UNUSED(eventLoop);
