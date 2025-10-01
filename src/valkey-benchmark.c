@@ -1268,10 +1268,10 @@ static void benchmarkSequence(const char *title, char *cmd, int len, int seqlen)
              &config.current_sec_latency_histogram);     // Pointer to initialise
 
     if (config.rps > 0) {
-        hdr_init(1,                 // Min RPS: 1
-                config.rps * 2,     // Max RPS: allow headroom above target RPS
-                config.precision,
-                &config.rps_histogram);
+        hdr_init(1,
+                 config.rps * 2,
+                 config.precision,
+                 &config.rps_histogram);
         config.last_rps_sample_time = 0;
         config.last_rps_sample_requests = 0;
     }
