@@ -137,8 +137,6 @@ static struct config {
     struct hdr_histogram *latency_histogram;
     struct hdr_histogram *current_sec_latency_histogram;
     struct hdr_histogram *rps_histogram;
-    long long last_rps_sample_time;
-    int last_rps_sample_requests;
     _Atomic int is_fetching_slots;
     _Atomic int is_updating_slots;
     _Atomic int slots_last_update;
@@ -1163,52 +1161,30 @@ static void showLatencyReport(void) {
         printf("  latency summary (msec):\n");
         printf("    %9s %9s %9s %9s %9s %9s\n", "avg", "min", "p50", "p95", "p99", "max");
         printf("    %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f\n", avg, p0, p50, p95, p99, p100);
-
-        /* RPS analysis - always show when --rps is used */
-        if (config.rps > 0) {
-            float target_rps = (float)config.rps;
-            float achievement_pct = (reqpersec / target_rps) * 100.0f;
-
-            printf("\n  RPS Analysis:\n");
-            printf("    Target RPS: %.0f\n", target_rps);
-            printf("    Actual RPS: %.2f (%.1f%% of target)\n", reqpersec, achievement_pct);
-
-            /* ADD RPS PERCENTILE ANALYSIS */
-            if (config.rps_histogram && config.rps_histogram->total_count > 0) {
-                const float rps_p1 = hdr_value_at_percentile(config.rps_histogram, 1.0);
-                const float rps_p10 = hdr_value_at_percentile(config.rps_histogram, 10.0);
-                const float rps_p50 = hdr_value_at_percentile(config.rps_histogram, 50.0);
-
-                printf("    RPS Performance Guarantees:\n");
-                printf("      99%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
-                       rps_p1, (rps_p1 / target_rps) * 100);
-                printf("      90%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
-                       rps_p10, (rps_p10 / target_rps) * 100);
-                printf("      50%% of time: RPS ≥ %.0f (%.1f%% of target)\n",
-                       rps_p50, (rps_p50 / target_rps) * 100);
-
-                /* Bottleneck analysis using P1 (99% of time achieved this or better) */
-                if (rps_p1 < 0.90 * target_rps) {
-                    printf("    Status: SEVERE BOTTLENECK DETECTED\n");
-                } else if (rps_p1 < 0.99 * target_rps) {
-                    printf("    Status: BOTTLENECK DETECTED\n");
-                }
-            } else {
-                /* Fallback to original average-based analysis */
-                if (reqpersec < target_rps * 0.90f) {
-                    printf("    Status: SEVERE BOTTLENECK DETECTED\n");
-                } else if (reqpersec < target_rps * 0.99f) {
-                    printf("    Status: BOTTLENECK DETECTED\n");
-                }
-            }
-        }
-
     } else if (config.csv) {
         printf("\"%s\",\"%.2f\",\"%.3f\",\"%.3f\",\"%.3f\",\"%.3f\",\"%.3f\",\"%.3f\"\n", config.title, reqpersec, avg,
                p0, p50, p95, p99, p100);
     } else {
         printf("%*s\r", config.last_printed_bytes, " "); // ensure there is a clean line
         printf("%s: %.2f requests per second, p50=%.3f msec\n", config.title, reqpersec, p50);
+    }
+}
+
+static void showRPSReport(void) {
+    if (config.rps_histogram && config.rps_histogram->total_count > 0) {
+        float target_rps = (float)config.rps;
+        printf("\nRPS Percentiles:\n");
+        printf("  P50: %lld\n", hdr_value_at_percentile(config.rps_histogram, 50.0));
+        printf("  P95: %lld\n", hdr_value_at_percentile(config.rps_histogram, 95.0));
+        printf("  P99: %lld\n", hdr_value_at_percentile(config.rps_histogram, 99.0));
+
+        // Optional bottleneck analysis
+        float p1 = hdr_value_at_percentile(config.rps_histogram, 1.0);
+        if (p1 < 0.90 * target_rps) {
+            printf("Status: SEVERE BOTTLENECK DETECTED\n");
+        } else if (p1 < 0.99 * target_rps) {
+            printf("Status: BOTTLENECK DETECTED\n");
+        }
     }
 }
 
@@ -1272,8 +1248,6 @@ static void benchmarkSequence(const char *title, char *cmd, int len, int seqlen)
                  config.rps * 2,
                  config.precision,
                  &config.rps_histogram);
-        config.last_rps_sample_time = 0;
-        config.last_rps_sample_requests = 0;
     }
 
     initPlaceholders(cmd, len);
@@ -1302,6 +1276,7 @@ static void benchmarkSequence(const char *title, char *cmd, int len, int seqlen)
     config.totlatency = mstime() - config.start;
 
     showLatencyReport();
+    showRPSReport();
     freeAllClients();
     if (config.threads) freeBenchmarkThreads();
     if (config.current_sec_latency_histogram) hdr_close(config.current_sec_latency_histogram);
@@ -1977,29 +1952,6 @@ usage:
     exit(exit_status);
 }
 
-static void sampleRPS(void) {
-    if (config.rps <= 0) return;
-
-    long long current_time = mstime();
-    int current_requests = atomic_load_explicit(&config.requests_finished, memory_order_relaxed);
-
-    // Sample every 1000ms (1 second)
-    if (current_time - config.last_rps_sample_time >= 1000) {
-        if (config.last_rps_sample_time > 0) { // Skip first sample
-            double time_diff_sec = (current_time - config.last_rps_sample_time) / 1000.0;
-            double requests_diff = current_requests - config.last_rps_sample_requests;
-            double current_rps = requests_diff / time_diff_sec;
-
-            if (current_rps >= 1.0) { // Only record valid RPS values
-                hdr_record_value(config.rps_histogram, (long)current_rps);
-            }
-        }
-
-        config.last_rps_sample_time = current_time;
-        config.last_rps_sample_requests = current_requests;
-    }
-}
-
 
 long long showThroughput(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     UNUSED(eventLoop);
@@ -2032,6 +1984,11 @@ long long showThroughput(struct aeEventLoop *eventLoop, long long id, void *clie
     const float rps = (float)requests_finished / dt;
     const float instantaneous_dt = (float)(current_tick - config.previous_tick) / 1000.0;
     const float instantaneous_rps = (float)(requests_finished - previous_requests_finished) / instantaneous_dt;
+
+    if (config.rps_histogram) {
+        hdr_record_value(config.rps_histogram, (int64_t)instantaneous_rps);
+    }
+
     config.previous_tick = current_tick;
     atomic_store_explicit(&config.previous_requests_finished, requests_finished, memory_order_relaxed);
     printf("%*s\r", config.last_printed_bytes, " "); /* ensure there is a clean line */
