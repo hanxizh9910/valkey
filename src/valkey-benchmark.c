@@ -1997,7 +1997,6 @@ long long showThroughput(struct aeEventLoop *eventLoop, long long id, void *clie
                hdr_mean(config.current_sec_latency_histogram) / 1000.0f, hdr_mean(config.latency_histogram) / 1000.0f);
     config.last_printed_bytes = printed_bytes;
     hdr_reset(config.current_sec_latency_histogram);
-    sampleRPS();
     fflush(stdout);
     return SHOW_THROUGHPUT_INTERVAL;
 }
