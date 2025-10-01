@@ -1188,15 +1188,10 @@ static void showLatencyReport(void) {
                        rps_p50, (rps_p50 / target_rps) * 100);
 
                 /* Bottleneck analysis using P1 (99% of time achieved this or better) */ 
-                if (rps_p1 >= 0.99 * target_rps) {
-                    printf("    Status: GOOD PERFORMANCE\n");
-                    printf("    99%% of time achieved 99%% of target RPS.\n");
-                } else if (rps_p1 >= 0.90 * target_rps) {
-                    printf("    Status: BOTTLENECK DETECTED\n");
-                    printf("    99%% of time achieved 90%% of target RPS.\n");
-                } else {
+                if (rps_p1 < 0.90 * target_rps) {
                     printf("    Status: SEVERE BOTTLENECK DETECTED\n");
-                    printf("    Performance significantly below target.\n");
+                } else if (rps_p1 < 0.99 * target_rps) {
+                    printf("    Status: BOTTLENECK DETECTED\n");
                 }
             } else {
                 /* Fallback to original average-based analysis */
@@ -1204,8 +1199,6 @@ static void showLatencyReport(void) {
                     printf("    Status: SEVERE BOTTLENECK DETECTED\n");
                 } else if (reqpersec < target_rps * 0.99f) {
                     printf("    Status: BOTTLENECK DETECTED\n");
-                } else {
-                    printf("    Status: GOOD PERFORMANCE\n");
                 }
             }
         }
