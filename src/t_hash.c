@@ -1210,8 +1210,8 @@ void hsetexCommand(client *c) {
         return;
 
     /* Check NX/XX key-level conditions before creating a new object */
-    if ((flags & ARGS_SET_NX) && o != NULL ||
-        (flags & ARGS_SET_XX) && o == NULL) {
+    if (((flags & ARGS_SET_NX) && o != NULL) ||
+        ((flags & ARGS_SET_XX) && o == NULL)) {
         addReply(c, shared.czero);
         return;
     }
