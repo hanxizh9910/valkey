@@ -1079,29 +1079,26 @@ static void createMissingClients(client c) {
 
 static void showRPSReport(void) {
     if (config.rps_histogram && config.rps_histogram->total_count > 0) {
-        float avg_rps = (float)config.requests_finished / ((float)config.totlatency / 1000.0f);
+        const float avg_rps = hdr_mean(config.rps_histogram);
+        const float p0   = (float)hdr_min(config.rps_histogram);
+        const float p50  = (float)hdr_value_at_percentile(config.rps_histogram, 50.0);
+        const float p95  = (float)hdr_value_at_percentile(config.rps_histogram, 95.0);
+        const float p99  = (float)hdr_value_at_percentile(config.rps_histogram, 99.0);
+        const float p100 = (float)hdr_max(config.rps_histogram);
 
-        float p50 = (float)hdr_value_at_percentile(config.rps_histogram, 50.0);
-        float p95 = (float)hdr_value_at_percentile(config.rps_histogram, 95.0);
-        float p99 = (float)hdr_value_at_percentile(config.rps_histogram, 99.0);
+        const float target_rps = (float)config.rps;
 
-        // Bottleneck detection using target RPS
-        float target_rps = (float)config.rps;
-        const char *rps_status = NULL;
+        // Bottleneck detection: if 95% of the RPS < 90% of target RPS
+        bool bottleneck_detected = (p95 < 0.9f * target_rps);
 
-        if (p99 < 0.9 * target_rps) {
-            rps_status = "SEVERE BOTTLENECK DETECTED";
-        } else if (p99 < target_rps) {
-            rps_status = "BOTTLENECK DETECTED";
-        }
-
-        if (rps_status) {
-            printf("\nRPS Percentiles:\n");
-            printf("  P50: %.0f\n", p50);
-            printf("  P95: %.0f\n", p95);
-            printf("  P99: %.0f\n", p99);
-            printf("  Average: %.0f\n", avg_rps);
-            printf("Status: %s\n", rps_status);
+        if (bottleneck_detected) {
+            printf("\n");
+            printf("RPS Summary (Bottleneck Detected):\n");
+            printf("  target RPS: %.2f\n", target_rps);
+            printf("  RPS distribution (reqs/sec):\n");
+            printf("    %9s %9s %9s %9s %9s %9s\n", "avg", "min", "p50", "p95", "p99", "max");
+            printf("    %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f\n", avg_rps, p0, p50, p95, p99, p100);
+            printf("  status: BOTTLENECK DETECTED\n");
         }
     }
 }
@@ -1184,7 +1181,6 @@ static void showLatencyReport(void) {
             }
             previous_cumulative_count = cumulative_count;
         }
-        showRPSReport();
         printf("\n");
         printf("Summary:\n");
         printf("  throughput summary: %.2f requests per second\n", reqpersec);
@@ -1288,6 +1284,7 @@ static void benchmarkSequence(const char *title, char *cmd, int len, int seqlen)
     config.totlatency = mstime() - config.start;
 
     showLatencyReport();
+    showRPSReport();
     freeAllClients();
     if (config.threads) freeBenchmarkThreads();
     if (config.current_sec_latency_histogram) hdr_close(config.current_sec_latency_histogram);
