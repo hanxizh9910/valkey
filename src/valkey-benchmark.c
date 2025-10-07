@@ -1080,10 +1080,10 @@ static void createMissingClients(client c) {
 static void showRPSReport(void) {
     if (config.rps_histogram && config.rps_histogram->total_count > 0) {
         const float avg_rps = hdr_mean(config.rps_histogram);
-        const float p0   = (float)hdr_min(config.rps_histogram);
-        const float p50  = (float)hdr_value_at_percentile(config.rps_histogram, 50.0);
-        const float p95  = (float)hdr_value_at_percentile(config.rps_histogram, 95.0);
-        const float p99  = (float)hdr_value_at_percentile(config.rps_histogram, 99.0);
+        const float p0 = (float)hdr_min(config.rps_histogram);
+        const float p50 = (float)hdr_value_at_percentile(config.rps_histogram, 50.0);
+        const float p95 = (float)hdr_value_at_percentile(config.rps_histogram, 95.0);
+        const float p99 = (float)hdr_value_at_percentile(config.rps_histogram, 99.0);
         const float p100 = (float)hdr_max(config.rps_histogram);
 
         const float target_rps = (float)config.rps;
