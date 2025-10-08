@@ -659,6 +659,7 @@ start_server {tags {"hashexpire"}} {
         r FLUSHALL
         set res [r HSETEX myhash XX FIELDS 2 f1 v1 f2 v2]
         assert_equal 0 $res
+        assert_equal 0 [r EXISTS myhash]
         assert_equal 0 [r HEXISTS myhash f1]
         assert_equal 0 [r HEXISTS myhash f2]
     }
@@ -747,6 +748,7 @@ start_server {tags {"hashexpire"}} {
         r FLUSHALL
         set res [r HSETEX myhash EX 10 NX FXX FIELDS 2 f1 v1 f2 v2]
         assert_equal 0 $res
+        assert_equal 0 [r EXISTS myhash]
         assert_equal 0 [r HEXISTS myhash f1]
         assert_equal 0 [r HEXISTS myhash f2]
     }
