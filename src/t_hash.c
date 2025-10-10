@@ -1216,13 +1216,6 @@ void hsetexCommand(client *c) {
         return;
     }
 
-    if (o == NULL) {
-        o = createHashObject();
-        dbAdd(c->db, c->argv[1], &o);
-    }
-
-    bool has_volatile_fields = hashTypeHasVolatileFields(o);
-
     /* Handle parsing and calculating the expiration time. */
     if (flags & ARGS_KEEPTTL)
         set_flags |= HASH_SET_KEEP_EXPIRY;
