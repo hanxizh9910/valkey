@@ -1311,6 +1311,38 @@ void hsetexCommand(client *c) {
                 notifyKeyspaceEvent(NOTIFY_HASH, "hexpire", c->argv[1], c->db->id);
             }
         }
+
+        /* Rewrite command vector for replication */
+        if (flags & (ARGS_SET_NX | ARGS_SET_XX | ARGS_SET_FNX | ARGS_SET_FXX)) {
+            int rewrite_argc = 2 + num_fields * 2; // command, hash + field/value pairs
+            robj **rewrite_argv = zmalloc(sizeof(robj*) * rewrite_argc);
+            int j = 0;
+
+            // First argument: command
+            rewrite_argv[j++] = c->argv[0];
+            incrRefCount(c->argv[0]);
+
+            // Second argument: hash
+            rewrite_argv[j++] = c->argv[1];
+            incrRefCount(c->argv[1]);
+
+            // Copy all field/value pairs, skipping NX/XX/FNX/FXX flags
+            for (int i = fields_index; i < c->argc; i++) {
+                // Skip NX/XX/FNX/FXX flags
+                if (strcmp(c->argv[i]->ptr, "NX") &&
+                    strcmp(c->argv[i]->ptr, "XX") &&
+                    strcmp(c->argv[i]->ptr, "FNX") &&
+                    strcmp(c->argv[i]->ptr, "FXX")) 
+                {
+                    rewrite_argv[j++] = c->argv[i];
+                    incrRefCount(c->argv[i]);
+                }
+            }
+
+            // Replace client command vector
+            replaceClientCommandVector(c, j, rewrite_argv);
+        }
+
         signalModifiedKey(c, c->db, c->argv[1]);
         /* Delete the object in case it was left empty */
         if (hashTypeLength(o) == 0) {
