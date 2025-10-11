@@ -1311,11 +1311,10 @@ void hsetexCommand(client *c) {
                 notifyKeyspaceEvent(NOTIFY_HASH, "hexpire", c->argv[1], c->db->id);
             }
         }
-
         /* Rewrite command vector for replication */
         if (flags & (ARGS_SET_NX | ARGS_SET_XX | ARGS_SET_FNX | ARGS_SET_FXX)) {
             int rewrite_argc = 2 + num_fields * 2; // command, hash + field/value pairs
-            robj **rewrite_argv = zmalloc(sizeof(robj*) * rewrite_argc);
+            robj **rewrite_argv = zmalloc(sizeof(robj *) * rewrite_argc);
             int j = 0;
 
             // First argument: command
@@ -1332,8 +1331,7 @@ void hsetexCommand(client *c) {
                 if (strcmp(c->argv[i]->ptr, "NX") &&
                     strcmp(c->argv[i]->ptr, "XX") &&
                     strcmp(c->argv[i]->ptr, "FNX") &&
-                    strcmp(c->argv[i]->ptr, "FXX")) 
-                {
+                    strcmp(c->argv[i]->ptr, "FXX")) {
                     rewrite_argv[j++] = c->argv[i];
                     incrRefCount(c->argv[i]);
                 }
