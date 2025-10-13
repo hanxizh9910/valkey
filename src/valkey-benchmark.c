@@ -1088,19 +1088,12 @@ static void showRPSReport(void) {
 
         const float target_rps = (float)config.rps;
 
-        // Bottleneck detection: if 95% of the RPS < 90% of target RPS
-        bool bottleneck_detected = (p95 < 0.9f * target_rps);
-
-        if (bottleneck_detected) {
-            printf("\n");
-            printf("RPS Summary (Bottleneck Detected):\n");
-            printf("  target RPS: %.2f\n", target_rps);
-            printf("  RPS distribution (reqs/sec):\n");
-            printf("    %9s %9s %9s %9s %9s %9s\n", "avg", "min", "p50", "p95", "p99", "max");
-            printf("    %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f\n", avg_rps, p0, p50, p95, p99, p100);
-            printf("    Bottleneck rule: 95%% of RPS < 90%% of target RPS (%.2f)\n", 0.9f * target_rps);
-            printf("  status: BOTTLENECK DETECTED\n");
-        }
+        printf("\n");
+        printf("RPS Summary:\n");
+        printf("  target RPS: %.2f\n", target_rps);
+        printf("  RPS distribution (reqs/sec):\n");
+        printf("    %9s %9s %9s %9s %9s %9s\n", "avg", "min", "p50", "p95", "p99", "max");
+        printf("    %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f\n", avg_rps, p0, p50, p95, p99, p100);
     }
 }
 
