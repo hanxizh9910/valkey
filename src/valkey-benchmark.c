@@ -1140,7 +1140,8 @@ static void showLatencyReport(void) {
         }
         printf("  multi-thread: %s\n", (config.num_threads ? "yes" : "no"));
         if (config.num_threads) printf("  threads: %d\n", config.num_threads);
-
+        /* Show the RPS Report */
+        showRPSReport();
         printf("\n");
         printf("Latency by percentile distribution:\n");
         struct hdr_iter iter;
@@ -1276,9 +1277,7 @@ static void benchmarkSequence(const char *title, char *cmd, int len, int seqlen)
     } else
         startBenchmarkThreads();
     config.totlatency = mstime() - config.start;
-
     showLatencyReport();
-    showRPSReport();
     freeAllClients();
     if (config.threads) freeBenchmarkThreads();
     if (config.current_sec_latency_histogram) hdr_close(config.current_sec_latency_histogram);
