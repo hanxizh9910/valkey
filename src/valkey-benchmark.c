@@ -1102,7 +1102,7 @@ static void showRPSReport(void) {
     }
 }
 
-static void showLatencyReport(void) {
+static void showReport(void) {
     const float reqpersec = (float)config.requests_finished / ((float)config.totlatency / 1000.0f);
     const float p0 = ((float)hdr_min(config.latency_histogram)) / 1000.0f;
     const float p50 = hdr_value_at_percentile(config.latency_histogram, 50.0) / 1000.0f;
@@ -1282,7 +1282,7 @@ static void benchmarkSequence(const char *title, char *cmd, int len, int seqlen)
     } else
         startBenchmarkThreads();
     config.totlatency = mstime() - config.start;
-    showLatencyReport();
+    showReport();
     freeAllClients();
     if (config.threads) freeBenchmarkThreads();
     if (config.current_sec_latency_histogram) hdr_close(config.current_sec_latency_histogram);
