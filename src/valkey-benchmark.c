@@ -1079,21 +1079,26 @@ static void createMissingClients(client c) {
 
 static void showRPSReport(void) {
     if (config.rps_histogram && config.rps_histogram->total_count > 0) {
-        const float avg_rps = hdr_mean(config.rps_histogram);
-        const float p0 = (float)hdr_min(config.rps_histogram);
-        const float p50 = (float)hdr_value_at_percentile(config.rps_histogram, 50.0);
-        const float p95 = (float)hdr_value_at_percentile(config.rps_histogram, 95.0);
-        const float p99 = (float)hdr_value_at_percentile(config.rps_histogram, 99.0);
-        const float p100 = (float)hdr_max(config.rps_histogram);
-
         const float target_rps = (float)config.rps;
+        const float threshold_rps = 0.9f * target_rps;
+        const int64_t p10 = hdr_value_at_percentile(config.rps_histogram, 10.0);
 
-        printf("\n");
-        printf("RPS Summary:\n");
-        printf("  target RPS: %.2f\n", target_rps);
-        printf("  RPS distribution (reqs/sec):\n");
-        printf("    %9s %9s %9s %9s %9s %9s\n", "avg", "min", "p50", "p95", "p99", "max");
-        printf("    %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f\n", avg_rps, p0, p50, p95, p99, p100);
+        if (p10 <= threshold_rps) {
+            const float avg_rps = hdr_mean(config.rps_histogram);
+            const float p0 = (float)hdr_min(config.rps_histogram);
+            const float p50 = (float)hdr_value_at_percentile(config.rps_histogram, 50.0);
+            const float p95 = (float)hdr_value_at_percentile(config.rps_histogram, 95.0);
+            const float p99 = (float)hdr_value_at_percentile(config.rps_histogram, 99.0);
+            const float p100 = (float)hdr_max(config.rps_histogram);
+
+            printf("\n");
+            printf("RPS Summary:\n");
+            printf("  target RPS: %.2f\n", target_rps);
+            printf("  RPS distribution (reqs/sec):\n");
+            printf("    %9s %9s %9s %9s %9s %9s\n", "avg", "min", "p50", "p95", "p99", "max");
+            printf("    %9.3f %9.3f %9.3f %9.3f %9.3f %9.3f\n", avg_rps, p0, p50, p95, p99, p100);
+            printf("Info: The RPS Summary is displayed if 10%% or more of the samples are below 90%% of the target RPS.\n");
+        }
     }
 }
 
