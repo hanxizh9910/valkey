@@ -1336,10 +1336,9 @@ void hsetexCommand(client *c) {
                     }
                 }
                 new_argc = j;
+                replaceClientCommandVector(c, new_argc, new_argv);
             }
         }
-
-        replaceClientCommandVector(c, new_argc, new_argv);
 
         signalModifiedKey(c, c->db, c->argv[1]);
         /* Delete the object in case it was left empty */
