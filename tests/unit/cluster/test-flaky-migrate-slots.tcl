@@ -1,3 +1,5 @@
+set base_conf [list cluster-enabled yes cluster-node-timeout 1000 cluster-databases 16]
+
 test {Migrate the last slot away from a node using valkey-cli} {
     start_multiple_servers 4 [list overrides $base_conf] {
         # Create a cluster of 3 nodes
