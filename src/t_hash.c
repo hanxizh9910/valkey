@@ -1306,7 +1306,7 @@ void hsetexCommand(client *c) {
         } else {
             hashTypeSet(o, c->argv[i]->ptr, c->argv[i + 1]->ptr, when, set_flags);
             changes++;
-            if (need_rewrite_for_nx_xx_fnx_fxx){
+            if (need_rewrite_for_nx_xx_fnx_fxx) {
                 new_argv[new_argc++] = c->argv[i];
                 incrRefCount(c->argv[i]);
             }
