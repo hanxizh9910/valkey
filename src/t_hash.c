@@ -1190,6 +1190,7 @@ void hsetexCommand(client *c) {
     int changes = 0;
     robj **new_argv = NULL;
     int new_argc = 0;
+    int need_rewrite_for_nx_xx_fnx_fxx = 0;
 
     for (; fields_index < c->argc - 1; fields_index++) {
         if (!strcasecmp(c->argv[fields_index]->ptr, "fields")) {
@@ -1208,6 +1209,10 @@ void hsetexCommand(client *c) {
     o = lookupKeyWrite(c->db, c->argv[1]);
     if (checkType(c, o, OBJ_HASH))
         return;
+
+    if (flags & (ARGS_SET_NX | ARGS_SET_XX | ARGS_SET_FNX | ARGS_SET_FXX)) {
+        need_rewrite_for_nx_xx_fnx_fxx = 1;
+    }
 
     /* Check NX/XX key-level conditions before creating a new object */
     if (((flags & ARGS_SET_NX) && o != NULL) ||
@@ -1266,6 +1271,28 @@ void hsetexCommand(client *c) {
         incrRefCount(shared.hdel);
         new_argv[new_argc++] = c->argv[1];
         incrRefCount(c->argv[1]);
+    } else if (need_rewrite_for_nx_xx_fnx_fxx) {
+        /* We use new_argv for rewrite */
+        int rewrite_argc = 2 + (c->argc - 2); // command + key + everything else
+        new_argv = zmalloc(sizeof(robj *) * rewrite_argc);
+        int j = 0;
+        // Command
+        new_argv[j++] = c->argv[0];
+        incrRefCount(c->argv[0]);
+        // Key
+        new_argv[j++] = c->argv[1];
+        incrRefCount(c->argv[1]);
+        // Copy optional args (skip NX/XX/FNX/FXX)
+        for (int i = 2; i < fields_index; i++) {
+            if (strcmp(c->argv[i]->ptr, "NX") &&
+                strcmp(c->argv[i]->ptr, "XX") &&
+                strcmp(c->argv[i]->ptr, "FNX") &&
+                strcmp(c->argv[i]->ptr, "FXX")) {
+                new_argv[j++] = c->argv[i];
+                incrRefCount(c->argv[i]);
+            }
+        }
+        new_argc = j;
     }
 
     for (i = fields_index; i < c->argc; i += 2) {
@@ -1280,6 +1307,10 @@ void hsetexCommand(client *c) {
         } else {
             hashTypeSet(o, c->argv[i]->ptr, c->argv[i + 1]->ptr, when, set_flags);
             changes++;
+            if (need_rewrite_for_nx_xx_fnx_fxx){
+                new_argv[new_argc++] = c->argv[i];
+                incrRefCount(c->argv[i]);
+            }
         }
     }
 
@@ -1294,6 +1325,7 @@ void hsetexCommand(client *c) {
             notifyKeyspaceEvent(NOTIFY_HASH, "hexpired", c->argv[1], c->db->id);
         } else {
             notifyKeyspaceEvent(NOTIFY_HASH, "hset", c->argv[1], c->db->id);
+            replaceClientCommandVector(c, new_argc, new_argv);
             if (expire) {
                 /* Propagate as HSETEX Key Value PXAT millisecond-timestamp if there is
                  * EX/PX/EXAT flag. */
@@ -1309,34 +1341,6 @@ void hsetexCommand(client *c) {
                     }
                 }
                 notifyKeyspaceEvent(NOTIFY_HASH, "hexpire", c->argv[1], c->db->id);
-            }
-        }
-
-        /* --- NX/XX/FNX/FXX rewrite --- */
-        if (flags & (ARGS_SET_NX | ARGS_SET_XX | ARGS_SET_FNX | ARGS_SET_FXX)) {
-            /* We use new_argv for rewrite */
-            if (!new_argv) {
-                int rewrite_argc = 2 + num_fields * 2;
-                new_argv = zmalloc(sizeof(robj *) * rewrite_argc);
-                int j = 0;
-
-                new_argv[j++] = c->argv[0];
-                incrRefCount(c->argv[0]);
-
-                new_argv[j++] = c->argv[1];
-                incrRefCount(c->argv[1]);
-
-                for (int i = fields_index; i < c->argc; i++) {
-                    if (strcmp(c->argv[i]->ptr, "NX") &&
-                        strcmp(c->argv[i]->ptr, "XX") &&
-                        strcmp(c->argv[i]->ptr, "FNX") &&
-                        strcmp(c->argv[i]->ptr, "FXX")) {
-                        new_argv[j++] = c->argv[i];
-                        incrRefCount(c->argv[i]);
-                    }
-                }
-                new_argc = j;
-                replaceClientCommandVector(c, new_argc, new_argv);
             }
         }
 
