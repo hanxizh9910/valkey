@@ -1324,7 +1324,9 @@ void hsetexCommand(client *c) {
             notifyKeyspaceEvent(NOTIFY_HASH, "hexpired", c->argv[1], c->db->id);
         } else {
             notifyKeyspaceEvent(NOTIFY_HASH, "hset", c->argv[1], c->db->id);
-            replaceClientCommandVector(c, new_argc, new_argv);
+            if (need_rewrite_for_nx_xx_fnx_fxx) {
+                replaceClientCommandVector(c, new_argc, new_argv);
+            }
             if (expire) {
                 /* Propagate as HSETEX Key Value PXAT millisecond-timestamp if there is
                  * EX/PX/EXAT flag. */
