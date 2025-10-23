@@ -1273,8 +1273,7 @@ void hsetexCommand(client *c) {
         incrRefCount(c->argv[1]);
     } else if (need_rewrite_for_nx_xx_fnx_fxx) {
         /* We use new_argv for rewrite */
-        int rewrite_argc = 2 + (c->argc - 2); // command + key + everything else
-        new_argv = zmalloc(sizeof(robj *) * rewrite_argc);
+        new_argv = zmalloc(sizeof(robj *) * c->argc);
         int j = 0;
         // Command
         new_argv[j++] = c->argv[0];
