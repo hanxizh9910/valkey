@@ -458,3 +458,14 @@ proc wait_for_slot_state {srv_idx pattern} {
         fail "incorrect slot state on R $srv_idx: expected $pattern; got [get_open_slots $srv_idx]"
     }
 }
+
+# Check if server_a knows node_b_id
+proc server_knows_node {server_a node_b_id} {
+    set nodes [get_cluster_nodes $server_a]
+    foreach n $nodes {
+        if {[dict get $n id] eq $node_b_id} {
+            return 1
+        }
+    }
+    return 0
+}

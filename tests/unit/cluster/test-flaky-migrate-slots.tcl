@@ -49,6 +49,13 @@ test {Migrate the last slot away from a node using valkey-cli} {
         set owner_r [valkey $owner_host $owner_port 0 $::tls]
         set owner_id [$owner_r CLUSTER MYID]
 
+        # Wait until the owner node knows the new node
+        wait_for_condition 1000 50 {
+            server_knows_node $owner_id $newnode_id
+        } else {
+            fail "Owner node does not know the new node yet"
+        }
+
         # Move slot to new node using plain commands
         assert_equal OK [$newnode_r CLUSTER SETSLOT $slot IMPORTING $owner_id]
         assert_equal OK [$owner_r CLUSTER SETSLOT $slot MIGRATING $newnode_id]
