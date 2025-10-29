@@ -49,10 +49,18 @@ test {Migrate the last slot away from a node using valkey-cli} {
         set owner_r [valkey $owner_host $owner_port 0 $::tls]
         set owner_id [$owner_r CLUSTER MYID]
 
-        # Wait until the owner node knows the new node
-        wait_for_condition 1000 50 {
-            server_knows_node $owner_id $newnode_id
-        } else {
+        # Wait until owner node knows the new node
+        wait_for_condition 1000 50 [list {
+            set nodes [get_cluster_nodes $owner_id]
+            set found 0
+            foreach n $nodes {
+                if {[dict get $n id] eq $newnode_id} {
+                    set found 1
+                    break
+                }
+            }
+            $found
+        }] else {
             fail "Owner node does not know the new node yet"
         }
 
