@@ -1264,7 +1264,9 @@ void hsetexCommand(client *c) {
 
     bool has_volatile_fields = hashTypeHasVolatileFields(o);
 
-    /* In case we are expiring all the elements prepare a new argv since we are going to delete all the expired fields. */
+    /* Prepare a new argv when rewritting the command. If set_expired is true, 
+     * all expired fields will be deleted. Otherwise, if rewriting is needed due to NX/XX/FNX/FXX flags, 
+     * copy the command, key, and optional arguments, skipping the NX/XX/FNX/FXX flags. */
     if (set_expired) {
         new_argv = zmalloc(sizeof(robj *) * (num_fields + 2));
         new_argv[new_argc++] = shared.hdel;
@@ -1344,7 +1346,6 @@ void hsetexCommand(client *c) {
                 notifyKeyspaceEvent(NOTIFY_HASH, "hexpire", c->argv[1], c->db->id);
             }
         }
-
         signalModifiedKey(c, c->db, c->argv[1]);
         /* Delete the object in case it was left empty */
         if (hashTypeLength(o) == 0) {
