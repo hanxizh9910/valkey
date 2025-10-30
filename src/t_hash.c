@@ -1264,7 +1264,7 @@ void hsetexCommand(client *c) {
 
     bool has_volatile_fields = hashTypeHasVolatileFields(o);
 
-    /* Prepare a new argv when rewritting the command. If set_expired is true, 
+    /* Prepare a new argv when rewriting the command. If set_expired is true, 
      * all expired fields will be deleted. Otherwise, if rewriting is needed due to NX/XX/FNX/FXX flags, 
      * copy the command, key, and optional arguments, skipping the NX/XX/FNX/FXX flags. */
     if (set_expired) {
