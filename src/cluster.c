@@ -267,7 +267,8 @@ void restoreCommand(client *c) {
         return;
     }
 
-    obj = rdbLoadObject(type, &payload, key->ptr, c->db->id, NULL);
+    long long now = commandTimeSnapshot();
+    obj = rdbLoadObject(type, &payload, key->ptr, c->db->id, NULL, RDBFLAGS_NONE, now);
     if (obj == NULL) {
         addReplyError(c, "Bad data format");
         return;

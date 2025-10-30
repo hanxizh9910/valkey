@@ -1904,7 +1904,7 @@ int lpValidateIntegrityAndDups(unsigned char *lp, size_t size, int deep, int pai
  * On success a newly allocated object is returned, otherwise NULL.
  * When the function returns NULL and if 'error' is not NULL, the
  * integer pointed by 'error' is set to the type of error that occurred */
-robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error) {
+robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error, int rdbflags, time_t now) {
     robj *o = NULL, *ele, *dec;
     uint64_t len;
     unsigned int i;
@@ -2225,6 +2225,28 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error) {
                     decrRefCount(o);
                     return NULL;
                 }
+            }
+
+            /* If this is a non-preamble RDB being loaded on the primary, and this
+             * field is already expired relative to 'now', skip it. */
+            if (iAmPrimary() && !(rdbflags & RDBFLAGS_AOF_PREAMBLE) &&
+                itemexpiry != EXPIRY_NONE && itemexpiry < now) {
+                /* Emit HDEL to replicas. */
+                if ((rdbflags & RDBFLAGS_FEED_REPL) && server.repl_backlog) {
+                    robj keyobj, fieldobj;
+                    initStaticStringObject(keyobj, key);
+                    initStaticStringObject(fieldobj, field);
+                    robj *argv[3];
+                    argv[0] = shared.hdel;  /* shared.hdel should exist */
+                    argv[1] = &keyobj;
+                    argv[2] = &fieldobj;
+                    replicationFeedReplicas(dbid, argv, 3);
+                }
+                /* free the pair */
+                sdsfree(field);
+                sdsfree(value);
+                /* continue to next field */
+                continue;
             }
 
             /* Add pair to hash table */
@@ -3395,7 +3417,7 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
         /* Read key */
         if ((key = rdbGenericLoadStringObject(rdb, RDB_LOAD_SDS, NULL)) == NULL) goto eoferr;
         /* Read value */
-        val = rdbLoadObject(type, rdb, key, db->id, &error);
+        val = rdbLoadObject(type, rdb, key, db->id, &error, rdbflags, now);
 
         /* Check if the key already expired. This function is used when loading
          * an RDB file from disk, either at startup, or when an RDB was
