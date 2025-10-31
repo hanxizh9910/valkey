@@ -1276,15 +1276,8 @@ void hsetexCommand(client *c) {
     } else if (need_rewrite_for_nx_xx_fnx_fxx_ex_px_exat) {
         /* We use new_argv for rewrite */
         new_argv = zmalloc(sizeof(robj *) * c->argc);
-        int j = 0;
-        // Command
-        new_argv[j++] = c->argv[0];
-        incrRefCount(c->argv[0]);
-        // Key
-        new_argv[j++] = c->argv[1];
-        incrRefCount(c->argv[1]);
         // Copy optional args (skip NX/XX/FNX/FXX)
-        for (int i = 2; i < fields_index; i++) {
+        for (int i = 0; i < fields_index; i++) {
             if (strcmp(c->argv[i]->ptr, "NX") &&
                 strcmp(c->argv[i]->ptr, "XX") &&
                 strcmp(c->argv[i]->ptr, "FNX") &&
@@ -1293,15 +1286,14 @@ void hsetexCommand(client *c) {
                  * EX/PX/EXAT flag. */
                 if (expire && !(flags & ARGS_PXAT) && c->argv[i + 1] == expire) {
                     robj *milliseconds_obj = createStringObjectFromLongLong(when);
-                    rewriteClientCommandArgument(c, i, shared.pxat);
-                    rewriteClientCommandArgument(c, i + 1, milliseconds_obj);
-                    decrRefCount(milliseconds_obj);
+                    new_argv[new_argc++] = shared.pxat;
+                    new_argv[new_argc++] = milliseconds_obj;
+                } else {
+                    new_argv[new_argc++] = c->argv[i];
+                    incrRefCount(c->argv[i]);
                 }
-                new_argv[j++] = c->argv[i];
-                incrRefCount(c->argv[i]);
             }
         }
-        new_argc = j;
     }
 
     for (i = fields_index; i < c->argc; i += 2) {
