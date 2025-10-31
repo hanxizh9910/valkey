@@ -1289,6 +1289,14 @@ void hsetexCommand(client *c) {
                 strcmp(c->argv[i]->ptr, "XX") &&
                 strcmp(c->argv[i]->ptr, "FNX") &&
                 strcmp(c->argv[i]->ptr, "FXX")) {
+                /* Propagate as HSETEX Key Value PXAT millisecond-timestamp if there is
+                 * EX/PX/EXAT flag. */
+                if (expire && !(flags & ARGS_PXAT) && c->argv[i + 1] == expire) {
+                    robj *milliseconds_obj = createStringObjectFromLongLong(when);
+                    rewriteClientCommandArgument(c, i, shared.pxat);
+                    rewriteClientCommandArgument(c, i + 1, milliseconds_obj);
+                    decrRefCount(milliseconds_obj);
+                }
                 new_argv[j++] = c->argv[i];
                 incrRefCount(c->argv[i]);
             }
@@ -1329,20 +1337,7 @@ void hsetexCommand(client *c) {
             if (need_rewrite_for_nx_xx_fnx_fxx) {
                 replaceClientCommandVector(c, new_argc, new_argv);
             }
-            if (expire) {
-                /* Propagate as HSETEX Key Value PXAT millisecond-timestamp if there is
-                 * EX/PX/EXAT flag. */
-                if (!(flags & ARGS_PXAT)) {
-                    for (int i = 2; i < fields_index; i++) {
-                        if (c->argv[i + 1] == expire) {
-                            robj *milliseconds_obj = createStringObjectFromLongLong(when);
-                            rewriteClientCommandArgument(c, i, shared.pxat);
-                            rewriteClientCommandArgument(c, i + 1, milliseconds_obj);
-                            decrRefCount(milliseconds_obj);
-                            break;
-                        }
-                    }
-                }
+            if (expire) {  
                 notifyKeyspaceEvent(NOTIFY_HASH, "hexpire", c->argv[1], c->db->id);
             }
         }
