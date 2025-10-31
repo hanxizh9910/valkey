@@ -1288,6 +1288,7 @@ void hsetexCommand(client *c) {
                     robj *milliseconds_obj = createStringObjectFromLongLong(when);
                     new_argv[new_argc++] = shared.pxat;
                     new_argv[new_argc++] = milliseconds_obj;
+                    i++; // skip the original expire argument
                 } else {
                     new_argv[new_argc++] = c->argv[i];
                     incrRefCount(c->argv[i]);
