@@ -1312,6 +1312,8 @@ void hsetexCommand(client *c) {
             if (need_rewrite_for_nx_xx_fnx_fxx_ex_px_exat) {
                 new_argv[new_argc++] = c->argv[i];
                 incrRefCount(c->argv[i]);
+                new_argv[new_argc++] = c->argv[i + 1];
+                incrRefCount(c->argv[i + 1]);
             }
         }
     }
@@ -1330,7 +1332,7 @@ void hsetexCommand(client *c) {
             if (need_rewrite_for_nx_xx_fnx_fxx_ex_px_exat) {
                 replaceClientCommandVector(c, new_argc, new_argv);
             }
-            if (expire) {  
+            if (expire) {
                 notifyKeyspaceEvent(NOTIFY_HASH, "hexpire", c->argv[1], c->db->id);
             }
         }
