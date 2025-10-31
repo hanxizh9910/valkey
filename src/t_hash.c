@@ -1190,7 +1190,7 @@ void hsetexCommand(client *c) {
     int changes = 0;
     robj **new_argv = NULL;
     int new_argc = 0;
-    int need_rewrite_for_nx_xx_fnx_fxx = 0;
+    int need_rewrite_for_nx_xx_fnx_fxx_ex_px_exat = 0;
 
     for (; fields_index < c->argc - 1; fields_index++) {
         if (!strcasecmp(c->argv[fields_index]->ptr, "fields")) {
@@ -1210,8 +1210,8 @@ void hsetexCommand(client *c) {
     if (checkType(c, o, OBJ_HASH))
         return;
 
-    if (flags & (ARGS_SET_NX | ARGS_SET_XX | ARGS_SET_FNX | ARGS_SET_FXX)) {
-        need_rewrite_for_nx_xx_fnx_fxx = 1;
+    if (flags & (ARGS_SET_NX | ARGS_SET_XX | ARGS_SET_FNX | ARGS_SET_FXX | ARGS_EX | ARGS_PX | ARGS_EXAT)) {
+        need_rewrite_for_nx_xx_fnx_fxx_ex_px_exat = 1;
     }
 
     /* Check NX/XX key-level conditions before creating a new object */
@@ -1273,7 +1273,7 @@ void hsetexCommand(client *c) {
         incrRefCount(shared.hdel);
         new_argv[new_argc++] = c->argv[1];
         incrRefCount(c->argv[1]);
-    } else if (need_rewrite_for_nx_xx_fnx_fxx) {
+    } else if (need_rewrite_for_nx_xx_fnx_fxx_ex_px_exat) {
         /* We use new_argv for rewrite */
         new_argv = zmalloc(sizeof(robj *) * c->argc);
         int j = 0;
@@ -1316,7 +1316,7 @@ void hsetexCommand(client *c) {
         } else {
             hashTypeSet(o, c->argv[i]->ptr, c->argv[i + 1]->ptr, when, set_flags);
             changes++;
-            if (need_rewrite_for_nx_xx_fnx_fxx) {
+            if (need_rewrite_for_nx_xx_fnx_fxx_ex_px_exat) {
                 new_argv[new_argc++] = c->argv[i];
                 incrRefCount(c->argv[i]);
             }
@@ -1334,7 +1334,7 @@ void hsetexCommand(client *c) {
             notifyKeyspaceEvent(NOTIFY_HASH, "hexpired", c->argv[1], c->db->id);
         } else {
             notifyKeyspaceEvent(NOTIFY_HASH, "hset", c->argv[1], c->db->id);
-            if (need_rewrite_for_nx_xx_fnx_fxx) {
+            if (need_rewrite_for_nx_xx_fnx_fxx_ex_px_exat) {
                 replaceClientCommandVector(c, new_argc, new_argv);
             }
             if (expire) {  
