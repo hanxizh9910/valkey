@@ -4356,3 +4356,83 @@ start_server {tags {"hashexpire external:skip"}} {
         }
     }
 }
+
+start_server {tags {"hashexpire skip expired fields"}} {
+    test {Expired fields are skipped when loading RDB} {
+        r FLUSHALL
+        # Create a hash with three fields
+        r HSET myhash f1 v1 f2 v2 f3 v3
+        
+        # Set short expirations for f1 and f2
+        r HSETEX myhash PX 100 FIELDS 1 f1 v1
+        r HSETEX myhash PX 150 FIELDS 1 f2 v2
+        
+        # Leave f3 without expiration
+        # Wait for the short-lived fields to expire
+        after 200
+
+        # Save the current dataset to an RDB
+        r SAVE
+        
+        # Restart the server to force RDB reload
+        restart_server 0 true false
+        
+        # After reload, only f3 should exist
+        assert_equal 1 [r HLEN myhash]
+        assert_equal "v3" [r HGET myhash f3]
+        assert_equal "" [r HGET myhash f1]
+        assert_equal "" [r HGET myhash f2]
+    }
+}
+
+start_server {tags {"hashexpire skip expired fields"}} {
+    test {All fields expire and hash is empty after RDB reload} {
+        r FLUSHALL
+        # Create a hash with three fields
+        r HSET myhash f1 v1 f2 v2 f3 v3
+
+        # Set short expirations for all fields
+        r HSETEX myhash PX 100 FIELDS 1 f1 v1
+        r HSETEX myhash PX 120 FIELDS 1 f2 v2
+        r HSETEX myhash PX 150 FIELDS 1 f3 v3
+
+        # Wait for all fields to expire
+        after 200
+
+        # Save the current dataset to an RDB
+        r SAVE
+
+        # Restart the server to force RDB reload
+        restart_server 0 true false
+
+        # After reload, the hash should be empty or removed
+        assert_equal 0 [r HLEN myhash]
+        assert_equal "" [r HGET myhash f1]
+        assert_equal "" [r HGET myhash f2]
+        assert_equal "" [r HGET myhash f3]
+    }
+}
+
+start_server {tags {"hashexpire skip expired fields"}} {
+    test {No fields expire and hash is fully loaded after RDB reload} {
+        r FLUSHALL
+        # Create a hash with three fields
+        r HSET myhash f1 v1 f2 v2 f3 v3
+
+        # No expirations set
+        # Wait some time just to simulate passage of time
+        after 200
+
+        # Save the current dataset to an RDB
+        r SAVE
+
+        # Restart the server to force RDB reload
+        restart_server 0 true false
+
+        # After reload, all fields should still exist
+        assert_equal 3 [r HLEN myhash]
+        assert_equal "v1" [r HGET myhash f1]
+        assert_equal "v2" [r HGET myhash f2]
+        assert_equal "v3" [r HGET myhash f3]
+    }
+}
