@@ -295,15 +295,13 @@ test {Migrate the last slot away from a node using valkey-cli} {
         set owner_r [valkey $owner_host $owner_port 0 $::tls]
         set owner_id [$owner_r CLUSTER MYID]
 
-        # Wait until owner node knows the new node
+        # get the index of the owner node
+        set owner_index [get_node_index_by_id $owner_id]
+
         wait_for_condition 1000 50 {
-            set found 0
-            foreach n [get_cluster_nodes $owner_id] {
-                if {[dict get $n id] eq $newnode_id} { set found 1; break }
-            }
-            $found
+            [cluster_get_node_by_id $owner_index $newnode_id] ne {}
         } else {
-            fail "Owner node does not know the new node yet"
+            fail "Owner node never learned the new node"
         }
 
         # Move slot to new node using plain commands

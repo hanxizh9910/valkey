@@ -459,13 +459,12 @@ proc wait_for_slot_state {srv_idx pattern} {
     }
 }
 
-# Check if server_a knows node_b_id
-proc server_knows_node {server_a node_b_id} {
-    set nodes [get_cluster_nodes $server_a]
-    foreach n $nodes {
-        if {[dict get $n id] eq $node_b_id} {
-            return 1
+# Returns the test index of a node given its node ID
+proc get_node_index_by_id {node_id} {
+    for {set i 0} {$i < [llength $::servers]} {incr i} {
+        if {[R $i CLUSTER MYID] eq $node_id} {
+            return $i
         }
     }
-    return 0
+    return -1  ;# not found
 }
