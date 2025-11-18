@@ -295,13 +295,20 @@ test {Migrate the last slot away from a node using valkey-cli} {
         set owner_r [valkey $owner_host $owner_port 0 $::tls]
         set owner_id [$owner_r CLUSTER MYID]
 
-        # get the index of the owner node
-        set owner_index [get_node_index_by_id $owner_id]
-
+        # Cluster check just verifies the config state is self-consistent,
+        # waiting for cluster_state to be okay is an independent check that all the
+        # nodes actually believe each other are healthy, prevent cluster down error.
         wait_for_condition 1000 50 {
-            [cluster_get_node_by_id $owner_index $newnode_id] ne {}
+            [catch {exec src/valkey-cli --cluster check 127.0.0.1:[srv 0 port]}] == 0 &&
+            [catch {exec src/valkey-cli --cluster check 127.0.0.1:[srv -1 port]}] == 0 &&
+            [catch {exec src/valkey-cli --cluster check 127.0.0.1:[srv -2 port]}] == 0 &&
+            [catch {exec src/valkey-cli --cluster check 127.0.0.1:[srv -3 port]}] == 0 &&
+            [CI 0 cluster_state] eq {ok} &&
+            [CI 1 cluster_state] eq {ok} &&
+            [CI 2 cluster_state] eq {ok} &&
+            [CI 3 cluster_state] eq {ok}
         } else {
-            fail "Owner node never learned the new node"
+            fail "Cluster doesn't stabilize"
         }
 
         # Move slot to new node using plain commands

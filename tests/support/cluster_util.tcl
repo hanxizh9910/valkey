@@ -458,13 +458,3 @@ proc wait_for_slot_state {srv_idx pattern} {
         fail "incorrect slot state on R $srv_idx: expected $pattern; got [get_open_slots $srv_idx]"
     }
 }
-
-# Returns the test index of a node given its node ID
-proc get_node_index_by_id {node_id} {
-    for {set i 0} {$i < [llength $::servers]} {incr i} {
-        if {[R $i CLUSTER MYID] eq $node_id} {
-            return $i
-        }
-    }
-    return -1  ;# not found
-}
