@@ -4386,5 +4386,5 @@ start_server {tags {"hashexpire skip expired fields"}} {
         assert_equal "" [r HGET myhash f1]
         assert_equal "" [r HGET myhash f2]
         assert_equal "" [r HGET myhash f3]
-    }
+    } {} {needs:debug}
 }
