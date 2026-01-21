@@ -788,7 +788,7 @@ int redis_check_rdb(char *rdbfilename, FILE *fp) {
         rdbstate.keys++;
         /* Read value */
         rdbstate.doing = RDB_CHECK_DOING_READ_OBJECT_VALUE;
-        if ((val = rdbLoadObject(type, &rdb, key->ptr, selected_dbid, NULL, RDBFLAGS_NONE, now)) == NULL) goto eoferr;
+        if ((val = rdbLoadObject(type, &rdb, objectGetVal(key), selected_dbid, NULL, RDBFLAGS_NONE, now)) == NULL) goto eoferr;
         if (rdbCheckStats) {
             int max_stats_num = (rdbstate.databases + 1) * OBJ_TYPE_MAX;
             if (max_stats_num > rdbstate.stats_num) {
