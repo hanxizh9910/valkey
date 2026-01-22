@@ -2246,7 +2246,7 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error, int rd
 
             /* If this is a non-preamble RDB being loaded on the primary, and this
              * field is already expired relative to 'now', skip it. */
-            if (iAmPrimary() && !(rdbflags & RDBFLAGS_AOF_PREAMBLE) &&
+            if (iAmPrimary() && !(rdbflags & RDBFLAGS_AOF_PREAMBLE) && now != 0 &&
                 itemexpiry != EXPIRY_NONE && itemexpiry < now) {
                 /* Emit HDEL to replicas. */
                 if ((rdbflags & RDBFLAGS_FEED_REPL) && server.repl_backlog) {
