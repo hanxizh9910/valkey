@@ -4587,15 +4587,19 @@ start_server {tags {"hashexpire skip expired fields"}} {
         
         # Disable active expiration
         r DEBUG SET-ACTIVE-EXPIRE 0
-        
-        # HSETEX many fields with small ttl (EX 1)
-        r HSETEX myhash EX 1 FIELDS 3 f1 v1 f2 v2 f3 v3
+        r HSETEX myhash PX 1 FIELDS 3 f1 v1 f2 v2 f3 v3
         
         # Add a permanent field to verify selective skipping
         r HSET myhash permanent permanent_value
         
-        # Wait for TTL to expire
-        after 2000
+        # Wait until all fields are expired (HTTL returns -2)
+        wait_for_condition 50 100 {
+            [lindex [r HTTL myhash FIELDS 1 f1] 0] == -2 &&
+            [lindex [r HTTL myhash FIELDS 1 f2] 0] == -2 &&
+            [lindex [r HTTL myhash FIELDS 1 f3] 0] == -2
+        } else {
+            fail "Fields did not expire"
+        }
         
         r SAVE
         r FLUSHALL
