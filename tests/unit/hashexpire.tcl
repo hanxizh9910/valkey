@@ -4615,4 +4615,31 @@ start_server {tags {"hashexpire skip expired fields"}} {
         assert_equal "" [r HGET myhash f2]
         assert_equal "" [r HGET myhash f3]
     } {} {needs:debug}
+
+    test {RESTORE loads expired hash fields} {
+        r FLUSHALL
+        r DEBUG SET-ACTIVE-EXPIRE 0
+        
+        r HSETEX myhash PX 1 FIELDS 3 f1 v1 f2 v2 f3 v3
+        r HSET myhash permanent permanent_value
+        
+        set serialized [r DUMP myhash]
+        
+        wait_for_condition 50 100 {
+            [lindex [r HTTL myhash FIELDS 1 f1] 0] == -2 &&
+            [lindex [r HTTL myhash FIELDS 1 f2] 0] == -2 &&
+            [lindex [r HTTL myhash FIELDS 1 f3] 0] == -2
+        } else {
+            fail "Fields did not expire"
+        }
+        
+        r DEL myhash
+        r RESTORE myhash 0 $serialized
+        
+        # Verify ALL fields were loaded (including expired ones)
+        assert_equal 4 [r HLEN myhash]
+        assert_equal "permanent_value" [r HGET myhash permanent]
+
+        r DEBUG SET-ACTIVE-EXPIRE 1
+    } {OK} {needs:debug}
 }
