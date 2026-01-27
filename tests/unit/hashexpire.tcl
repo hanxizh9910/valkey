@@ -4616,6 +4616,36 @@ start_server {tags {"hashexpire skip expired fields"}} {
         assert_equal "" [r HGET myhash f3]
     } {} {needs:debug}
 
+    test {Hash is skipped when all fields are expired during RDB load on primary} {
+        r FLUSHALL
+        
+        # Disable active expiration
+        r DEBUG SET-ACTIVE-EXPIRE 0
+        r HSETEX myhash PX 1 FIELDS 3 f1 v1 f2 v2 f3 v3
+        
+        # No permanent field - all fields will expire
+        
+        # Wait until all fields are expired (HTTL returns -2)
+        wait_for_condition 50 100 {
+            [lindex [r HTTL myhash FIELDS 1 f1] 0] == -2 &&
+            [lindex [r HTTL myhash FIELDS 1 f2] 0] == -2 &&
+            [lindex [r HTTL myhash FIELDS 1 f3] 0] == -2
+        } else {
+            fail "Fields did not expire"
+        }
+        
+        r SAVE
+        r FLUSHALL
+        r DEBUG RELOAD NOSAVE
+        
+        # Re-enable active expiration
+        r DEBUG SET-ACTIVE-EXPIRE 1
+        
+        # Verify: key should not exist at all (empty hash skipped)
+        assert_equal 0 [r EXISTS myhash]
+        assert_equal 0 [r HLEN myhash]
+    } {} {needs:debug}
+
     test {RESTORE loads expired hash fields} {
         r FLUSHALL
         r DEBUG SET-ACTIVE-EXPIRE 0

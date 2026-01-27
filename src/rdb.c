@@ -2283,6 +2283,12 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error, int rd
 
         /* All pairs should be read by now */
         serverAssert(len == 0);
+
+        /* Check if hash became empty after skipping all expired fields */
+        if (hashTypeLength(o) == 0) {
+            decrRefCount(o);
+            goto emptykey;
+        }
     } else if (rdbtype == RDB_TYPE_LIST_QUICKLIST || rdbtype == RDB_TYPE_LIST_QUICKLIST_2) {
         if ((len = rdbLoadLen(rdb, NULL)) == RDB_LENERR) return NULL;
         if (len == 0) goto emptykey;
