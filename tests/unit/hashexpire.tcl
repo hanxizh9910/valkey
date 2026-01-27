@@ -4674,13 +4674,11 @@ start_server {tags {"hashexpire"}} {
         
         # No permanent field - all fields will expire
         
-        # Wait until all fields are expired (HTTL returns -2)
+        # Wait until all fields are expired
         wait_for_condition 50 100 {
-            [lindex [r HTTL myhash FIELDS 1 f1] 0] == -2 &&
-            [lindex [r HTTL myhash FIELDS 1 f2] 0] == -2 &&
-            [lindex [r HTTL myhash FIELDS 1 f3] 0] == -2
+            [r HTTL myhash FIELDS 3 f1 f2 f3] eq {-2 -2 -2}
         } else {
-            fail "Fields did not expire"
+            fail "Hash fields did not expire"
         }
         
         r SAVE
@@ -4704,12 +4702,11 @@ start_server {tags {"hashexpire"}} {
         
         set serialized [r DUMP myhash]
         
+        # Wait until all fields are expired
         wait_for_condition 50 100 {
-            [lindex [r HTTL myhash FIELDS 1 f1] 0] == -2 &&
-            [lindex [r HTTL myhash FIELDS 1 f2] 0] == -2 &&
-            [lindex [r HTTL myhash FIELDS 1 f3] 0] == -2
+            [r HTTL myhash FIELDS 3 f1 f2 f3] eq {-2 -2 -2}
         } else {
-            fail "Fields did not expire"
+            fail "Hash fields did not expire"
         }
         
         r DEL myhash
