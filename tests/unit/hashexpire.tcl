@@ -4685,13 +4685,13 @@ start_server {tags {"hashexpire"}} {
         r FLUSHALL
         r DEBUG RELOAD NOSAVE
         
-        # Re-enable active expiration
-        r DEBUG SET-ACTIVE-EXPIRE 1
-        
         # Verify: key should not exist at all (empty hash skipped)
         assert_equal 0 [r EXISTS myhash]
         assert_equal 0 [r HLEN myhash]
-    } {} {needs:debug}
+        
+        # Re-enable active expiration
+        r DEBUG SET-ACTIVE-EXPIRE 1
+    } {OK} {needs:debug}
 
     test {RESTORE loads expired hash fields} {
         r FLUSHALL
@@ -4716,6 +4716,7 @@ start_server {tags {"hashexpire"}} {
         assert_equal 4 [r HLEN myhash]
         assert_equal "permanent_value" [r HGET myhash permanent]
 
+        # Re-enable active expiration
         r DEBUG SET-ACTIVE-EXPIRE 1
     } {OK} {needs:debug}
 }
