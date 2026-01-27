@@ -4611,22 +4611,15 @@ start_server {} {
         $primary debug set-active-expire 0
         
         # Create hash with expiring fields and one permanent field
-        $primary hsetex myhash PX 1000 FIELDS 3 f1 v1 f2 v2 f3 v3
+        $primary hsetex myhash PX 1 FIELDS 3 f1 v1 f2 v2 f3 v3
         $primary hset myhash permanent permanent_value
         
         # Wait for replica to sync
-        wait_for_condition 50 100 {
-            [$replica hlen myhash] == 4 &&
-            [$sub_replica hlen myhash] == 4
-        } else {
-            fail "Replicas did not receive hash"
-        }
+        wait_for_ofs_sync $primary $replica
         
         # Wait until all fields are expired
         wait_for_condition 50 100 {
-            [lindex [$primary httl myhash FIELDS 1 f1] 0] == -2 &&
-            [lindex [$primary httl myhash FIELDS 1 f2] 0] == -2 &&
-            [lindex [$primary httl myhash FIELDS 1 f3] 0] == -2
+            [$primary httl myhash FIELDS 3 f1 f2 f3] eq {-2 -2 -2}
         } else {
             fail "Hash fields did not expire"
         }
