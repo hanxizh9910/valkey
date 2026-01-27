@@ -4632,6 +4632,8 @@ start_server {} {
             restart_server 0 true false
             set primary [srv 0 client]
         }
+
+        $primary debug set-active-expire 0
         
         # Wait for replicas to reconnect
         wait_for_condition 50 1000 {
@@ -4640,9 +4642,6 @@ start_server {} {
         } else {
             fail "Replicas didn't sync after master restart"
         }
-        
-        # Re-enable active expiration
-        $primary debug set-active-expire 1
         
         # Verify primary has only the permanent field
         assert_equal 1 [$primary hlen myhash]
@@ -4658,7 +4657,11 @@ start_server {} {
         
         assert_equal "permanent_value" [$replica hget myhash permanent]
         assert_equal "permanent_value" [$sub_replica hget myhash permanent]
-    } {} {needs:debug}
+
+        # Re-enable active expiration
+        $primary debug set-active-expire 1
+        
+    } {OK} {needs:debug}
 }}}
 
 start_server {tags {"hashexpire"}} {
