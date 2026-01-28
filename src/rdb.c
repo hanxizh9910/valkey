@@ -2287,7 +2287,8 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error, int rd
         /* Check if hash became empty after skipping all expired fields */
         if (hashTypeLength(o) == 0) {
             decrRefCount(o);
-            goto emptykey;
+            if (error) *error = RDB_LOAD_ERR_ALL_ITEMS_EXPIRED;
+            return NULL;
         }
     } else if (rdbtype == RDB_TYPE_LIST_QUICKLIST || rdbtype == RDB_TYPE_LIST_QUICKLIST_2) {
         if ((len = rdbLoadLen(rdb, NULL)) == RDB_LENERR) return NULL;
@@ -3475,6 +3476,8 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
                 sdsfree(key);
                 serverLog(LL_WARNING, "Unknown type or opcode when loading DB. Unrecoverable error, aborting now.");
                 return RDB_FAILED;
+            } else if (error == RDB_LOAD_ERR_ALL_ITEMS_EXPIRED) {
+                sdsfree(key);
             } else {
                 sdsfree(key);
                 goto eoferr;
