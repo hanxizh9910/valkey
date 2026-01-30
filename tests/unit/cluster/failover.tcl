@@ -124,6 +124,7 @@ start_cluster 3 6 {tags {external:skip cluster}} {
         puts "DEBUG: ========== USING NEW TEST CODE v1 =========="
         
         wait_for_condition 50 100 {
+            puts "CHECKING THE START OF ELECTION"
             [string match "*Start of election*" [exec cat [srv -3 stdout]]] &&
             [string match "*Start of election*" [exec cat [srv -6 stdout]]]
         } else {
