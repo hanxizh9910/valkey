@@ -2970,6 +2970,7 @@ void startLoading(size_t size, int rdbflags, int async) {
     server.loading_rdb_used_mem = 0;
     server.rdb_last_load_keys_expired = 0;
     server.rdb_last_load_keys_loaded = 0;
+    server.rdb_last_load_all_fields_expired = 0;
     blockingOperationStarts();
 
     /* Cleanup slot migrations (we need a clean state for the incoming load) */
@@ -3477,6 +3478,7 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
                 serverLog(LL_WARNING, "Unknown type or opcode when loading DB. Unrecoverable error, aborting now.");
                 return RDB_FAILED;
             } else if (error == RDB_LOAD_ERR_ALL_ITEMS_EXPIRED) {
+                server.rdb_last_load_all_fields_expired++;
                 sdsfree(key);
             } else {
                 sdsfree(key);
@@ -3567,11 +3569,11 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
     }
 
     if (empty_keys_skipped) {
-        serverLog(LL_NOTICE, "Done loading RDB, keys loaded: %lld, keys expired: %lld, empty keys skipped: %lld.",
-                  server.rdb_last_load_keys_loaded, server.rdb_last_load_keys_expired, empty_keys_skipped);
+        serverLog(LL_NOTICE, "Done loading RDB, keys loaded: %lld, keys expired: %lld, empty keys skipped: %lld, all fields expired hashes: %lld.",
+                  server.rdb_last_load_keys_loaded, server.rdb_last_load_keys_expired, empty_keys_skipped, server.rdb_last_load_all_fields_expired);
     } else {
-        serverLog(LL_NOTICE, "Done loading RDB, keys loaded: %lld, keys expired: %lld.",
-                  server.rdb_last_load_keys_loaded, server.rdb_last_load_keys_expired);
+        serverLog(LL_NOTICE, "Done loading RDB, keys loaded: %lld, keys expired: %lld, all fields expired hashes: %lld.",
+                  server.rdb_last_load_keys_loaded, server.rdb_last_load_keys_expired, server.rdb_last_load_all_fields_expired);
     }
     return RDB_OK;
 

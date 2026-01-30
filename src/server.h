@@ -2020,17 +2020,18 @@ struct valkeyServer {
                                            default no. (for testings). */
 
     /* RDB persistence */
-    long long dirty;                      /* Changes to DB from the last save */
-    long long dirty_before_bgsave;        /* Used to restore dirty on failed BGSAVE */
-    long long rdb_last_load_keys_expired; /* number of expired keys when loading RDB */
-    long long rdb_last_load_keys_loaded;  /* number of loaded keys when loading RDB */
-    struct saveparam *saveparams;         /* Save points array for RDB */
-    int saveparamslen;                    /* Number of saving points */
-    char *rdb_filename;                   /* Name of RDB file */
-    int rdb_compression;                  /* Use compression in RDB? */
-    int rdb_checksum;                     /* Use RDB checksum? */
-    int rdb_del_sync_files;               /* Remove RDB files used only for SYNC if
-                                             the instance does not use persistence. */
+    long long dirty;                            /* Changes to DB from the last save */
+    long long dirty_before_bgsave;              /* Used to restore dirty on failed BGSAVE */
+    long long rdb_last_load_keys_expired;       /* number of expired keys when loading RDB */
+    long long rdb_last_load_keys_loaded;        /* number of loaded keys when loading RDB */
+    long long rdb_last_load_all_fields_expired; /* number of hash keys skipped because all fields expired during RDB load */
+    struct saveparam *saveparams;               /* Save points array for RDB */
+    int saveparamslen;                          /* Number of saving points */
+    char *rdb_filename;                         /* Name of RDB file */
+    int rdb_compression;                        /* Use compression in RDB? */
+    int rdb_checksum;                           /* Use RDB checksum? */
+    int rdb_del_sync_files;                     /* Remove RDB files used only for SYNC if
+                                                   the instance does not use persistence. */
     time_t lastsave;                      /* Unix time of last successful save */
     time_t lastbgsave_try;                /* Unix time of last attempted bgsave */
     time_t rdb_save_time_last;            /* Time used by last RDB save run. */
