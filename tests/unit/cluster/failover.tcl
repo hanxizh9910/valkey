@@ -121,20 +121,6 @@ start_cluster 3 6 {tags {external:skip cluster}} {
     }
 
     test "Make sure the replicas always get the different ranks" {
-        puts "DEBUG: ========== USING NEW TEST CODE v1 =========="
-        
-        wait_for_condition 50 100 {
-            puts "CHECKING THE START OF ELECTION"
-            [string match "*Start of election*" [exec cat [srv -3 stdout]]] &&
-            [string match "*Start of election*" [exec cat [srv -6 stdout]]]
-        } else {
-            puts "DEBUG -3 log contents:"
-            puts [exec cat [srv -3 stdout]]
-            puts "DEBUG -6 log contents:"
-            puts [exec cat [srv -6 stdout]]
-            fail "Election log not found"
-        }
-        
         if {[s -3 role] == "master"} {
             verify_log_message -3 "*Start of election*rank #0*" 0
             verify_log_message -6 "*Start of election*rank #1*" 0
