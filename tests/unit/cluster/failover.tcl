@@ -80,6 +80,15 @@ start_cluster 3 6 {tags {external:skip cluster}} {
     test "Cluster is writable" {
         cluster_write_test [srv 0 port]
     }
+    
+    test "Replicas of primary 0 are synced" {
+        wait_for_condition 1000 50 {
+            [s -3 master_link_status] eq {up} &&
+            [s -6 master_link_status] eq {up}
+        } else {
+            fail "Replicas of primary 0 are not synced"
+        }
+    }
 
     set current_epoch [CI 1 cluster_current_epoch]
 
