@@ -139,7 +139,8 @@ start_cluster 3 6 {tags {external:skip cluster}} {
         set srv6_has_rank1 [string match "*Start of election*rank #1*" $log6]
         
         # One should have rank #0, other should have rank #1 (different ranks)
-        assert {($srv3_has_rank0 && $srv6_has_rank1) || ($srv3_has_rank1 && $srv6_has_rank0)} \
-            "Replicas should have different ranks"
+        if {!(($srv3_has_rank0 && $srv6_has_rank1) || ($srv3_has_rank1 && $srv6_has_rank0))} {
+            fail "Replicas should have different ranks: srv3_rank0=$srv3_has_rank0, srv3_rank1=$srv3_has_rank1, srv6_rank0=$srv6_has_rank0, srv6_rank1=$srv6_has_rank1"
+        }
     }
 } ;# start_cluster
