@@ -92,18 +92,55 @@ jobs:
         with:
           repository: ${{ (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name) || env.GITHUB_REPOSITORY || github.repository }}
           ref: ${{ (github.event_name == 'pull_request_target' && github.event.pull_request.head.sha) || env.GITHUB_HEAD_REF || github.ref }}
-      - name: Create dummy test output
+      - name: Create dummy test failures
         run: |
-          echo "Starting dummy test at $(date)" > test-output.txt
-          echo "Test 1: PASSED" >> test-output.txt
-          echo "Test 2: PASSED" >> test-output.txt
-          echo "Test 3: PASSED" >> test-output.txt
-          echo "All tests completed at $(date)" >> test-output.txt
-          cat test-output.txt
-      - name: Upload test output
+          cat > test-failures.json << 'EOF'
+          [
+            {"name": "unit/keyspace", "error": "Expected 3 keys but got 2"},
+            {"name": "unit/expire", "error": "Timeout waiting for key expiry"}
+          ]
+          EOF
+          cat test-failures.json
+      - name: Upload test failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-output-dummy-quick
-          path: test-output.txt
-          retention-days: 30
+          name: test-failures-dummy-quick
+          path: test-failures.json
+          retention-days: 7
+
+  test-dummy-slow:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'schedule' && github.repository == 'valkey-io/valkey') ||
+        (github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'unstable') ||
+        (github.event_name == 'pull_request_target' && github.event.label.name == 'run-extra-tests')) &&
+      !contains(github.event.inputs.skipjobs, 'ubuntu')
+    timeout-minutes: 10
+    steps:
+      - name: prep
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
+        run: |
+          echo "GITHUB_REPOSITORY=${{inputs.use_repo || github.event.inputs.use_repo}}" >> $GITHUB_ENV
+          echo "GITHUB_HEAD_REF=${{inputs.use_git_ref || github.event.inputs.use_git_ref}}" >> $GITHUB_ENV
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          repository: ${{ (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name) || env.GITHUB_REPOSITORY || github.repository }}
+          ref: ${{ (github.event_name == 'pull_request_target' && github.event.pull_request.head.sha) || env.GITHUB_HEAD_REF || github.ref }}
+      - name: Create dummy test failures
+        run: |
+          cat > test-failures.json << 'EOF'
+          [
+            {"name": "integration/replication", "error": "Replica failed to sync within 10s"},
+            {"name": "unit/keyspace", "error": "Expected 3 keys but got 2"}
+          ]
+          EOF
+          cat test-failures.json
+      - name: Upload test failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failures-dummy-slow
+          path: test-failures.json
+          retention-days: 7
