@@ -1,0 +1,155 @@
+name: Flaky Test Detector
+
+on:
+  workflow_run:
+    workflows: ["Daily"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  detect-flaky-tests:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Download all test-failures artifacts
+      - name: Download artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const runId = context.payload.workflow_run.id;
+            console.log(`Fetching artifacts from run ${runId}`);
+
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId,
+            });
+
+            const matched = artifacts.data.artifacts.filter(a => a.name.startsWith('test-failures-'));
+            console.log(`Found ${matched.length} test-failures artifacts`);
+
+            fs.mkdirSync('artifacts', { recursive: true });
+
+            for (const artifact of matched) {
+              console.log(`Downloading: ${artifact.name}`);
+              const download = await github.rest.actions.downloadArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+                archive_format: 'zip',
+              });
+              fs.writeFileSync(`artifacts/${artifact.name}.zip`, Buffer.from(download.data));
+            }
+
+      - name: Unzip artifacts
+        run: |
+          for zip in artifacts/*.zip; do
+            dir="extracted/$(basename "$zip" .zip)"
+            mkdir -p "$dir"
+            unzip -o "$zip" -d "$dir"
+          done
+          echo "=== All files ==="
+          find extracted -type f
+
+      # Step 2: Merge failures and deduplicate
+      - name: Merge failures
+        id: merge
+        run: |
+          python3 << 'EOF'
+          import json, glob, os
+
+          seen = set()
+          unique_failures = []
+
+          for f in glob.glob("extracted/**/test-failures.json", recursive=True):
+              print(f"Reading: {f}")
+              with open(f) as fh:
+                  failures = json.load(fh)
+              for failure in failures:
+                  if failure["name"] not in seen:
+                      seen.add(failure["name"])
+                      unique_failures.append(failure)
+                      print(f"  ❌ {failure['name']}: {failure.get('error', '')}")
+                  else:
+                      print(f"  ⏭️  {failure['name']} (duplicate, skipped)")
+
+          print(f"\nTotal unique failures: {len(unique_failures)}")
+
+          with open("failures.json", "w") as f:
+              json.dump(unique_failures, f, indent=2)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"has_failures={'true' if unique_failures else 'false'}\n")
+          EOF
+
+      # Step 3: Fetch existing issues and create/update
+      - name: Create or update issues
+        if: steps.merge.outputs.has_failures == 'true'
+        uses: actions/github-script@v7
+        env:
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        with:
+          script: |
+            const fs = require('fs');
+            const failures = JSON.parse(fs.readFileSync('failures.json', 'utf8'));
+            const runUrl = process.env.RUN_URL;
+            const label = 'flaky-test';
+
+            // Ensure label exists
+            try {
+              await github.rest.issues.getLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: label,
+              });
+            } catch (e) {
+              if (e.status === 404) {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label,
+                  color: 'e11d48',
+                  description: 'Flaky test detected by CI',
+                });
+              }
+            }
+
+            // Fetch all open flaky-test issues
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: label,
+              state: 'open',
+              per_page: 100,
+            });
+
+            for (const failure of failures) {
+              const title = `Flaky Test: ${failure.name}`;
+              const existing = existingIssues.data.find(i => i.title === title);
+
+              if (existing) {
+                console.log(`Commenting on #${existing.number} for ${failure.name}`);
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existing.number,
+                  body: `Test failed again.\n\n**Error:** ${failure.error || 'N/A'}\n**Run:** ${runUrl}\n**Date:** ${new Date().toISOString().split('T')[0]}`,
+                });
+              } else {
+                console.log(`Creating issue for ${failure.name}`);
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: title,
+                  labels: [label],
+                  body: `## Flaky Test Detected\n\n**Test:** \`${failure.name}\`\n**Error:** ${failure.error || 'N/A'}\n**Run:** ${runUrl}\n**Date:** ${new Date().toISOString().split('T')[0]}\n\n---\n*Auto-created by Flaky Test Detector*`,
+                });
+              }
+            }
+
+            console.log(`Done. Processed ${failures.length} failure(s).`);
