@@ -2,7 +2,6 @@ name: Daily
 on:
   pull_request:
     branches:
-      # any PR to a release branch.
       - "[0-9].[0-9]"
     paths-ignore:
       - '**/*.md'
@@ -96,8 +95,8 @@ jobs:
         run: |
           cat > test-failures.json << 'EOF'
           [
-            {"name": "unit/keyspace", "error": "Expected 3 keys but got 2"},
-            {"name": "unit/expire", "error": "Timeout waiting for key expiry"}
+            {"name": "unit/keyspace", "job": "test-dummy-quick", "error": "Expected 3 keys but got 2"},
+            {"name": "unit/expire", "job": "test-dummy-quick", "error": "Timeout waiting for key expiry"}
           ]
           EOF
           cat test-failures.json
@@ -132,8 +131,8 @@ jobs:
         run: |
           cat > test-failures.json << 'EOF'
           [
-            {"name": "integration/replication", "error": "Replica failed to sync within 10s"},
-            {"name": "unit/keyspace", "error": "Expected 3 keys but got 2"}
+            {"name": "integration/replication", "job": "test-dummy-slow", "error": "Replica failed to sync within 10s"},
+            {"name": "unit/keyspace", "job": "test-dummy-slow", "error": "Expected 3 keys but got 2"}
           ]
           EOF
           cat test-failures.json
