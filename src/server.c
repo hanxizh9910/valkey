@@ -2964,7 +2964,6 @@ void initServer(void) {
     server.rdb_save_time_last = -1;
     server.rdb_save_time_start = -1;
     server.rdb_last_load_keys_expired = 0;
-    server.rdb_last_load_all_fields_expired = 0;
     server.rdb_last_load_keys_loaded = 0;
     server.dirty = 0;
     server.crashed = 0;
