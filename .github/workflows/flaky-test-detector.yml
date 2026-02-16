@@ -15,6 +15,8 @@ jobs:
   detect-flaky-tests:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       # Step 1: Download all test-failures artifacts
       - name: Download artifacts
         uses: actions/github-script@v7
@@ -79,36 +81,46 @@ jobs:
 
             fs.writeFileSync('job-urls.json', JSON.stringify(jobUrlMap, null, 2));
 
-      # Step 3: Merge failures and group by test name
+      # Step 3: Parse and merge failures
       - name: Merge failures
         id: merge
         run: |
           python3 << 'EOF'
-          import json, glob, os
+          import json, glob, os, re, sys
+          sys.path.insert(0, '.github/scripts')
+          from extract_failures import parse_failure_entry
 
           with open("job-urls.json") as f:
               job_urls = json.load(f)
 
           grouped = {}
 
-          for f in glob.glob("extracted/**/test-failures.json", recursive=True):
-              print(f"Reading: {f}")
-              with open(f) as fh:
-                  failures = json.load(fh)
-              for failure in failures:
-                  name = failure["name"]
-                  job = failure.get("job", "unknown")
+          for filepath in glob.glob("extracted/**/test-failures.json", recursive=True):
+              # Extract job name from directory: extracted/test-failures-dummy-quick/test-failures.json
+              dir_name = os.path.basename(os.path.dirname(filepath))
+              job_name = dir_name.replace("test-failures-", "")
+              print(f"Reading: {filepath} (job: {job_name})")
+
+              with open(filepath) as fh:
+                  raw_entries = json.load(fh)
+
+              for entry in raw_entries:
+                  failure = parse_failure_entry(entry, job_name)
+                  name = f"{failure['test_name']} in {failure['test_file']}"
+
                   if name not in grouped:
                       grouped[name] = {
                           "name": name,
-                          "error": failure.get("error", ""),
+                          "test_name": failure["test_name"],
+                          "test_file": failure["test_file"],
+                          "error": failure["error"],
                           "jobs": []
                       }
                   grouped[name]["jobs"].append({
-                      "job": job,
-                      "url": job_urls.get(job, "")
+                      "job": job_name,
+                      "url": job_urls.get(job_name, "")
                   })
-                  print(f"  ❌ {name} in {job}")
+                  print(f"  ❌ {name} in {job_name}")
 
           unique_failures = list(grouped.values())
           print(f"\nTotal unique failures: {len(unique_failures)}")
@@ -161,7 +173,7 @@ jobs:
             const today = new Date().toISOString().split('T')[0];
 
             for (const failure of failures) {
-              const title = `[TEST-FAILURE] ${failure.name}`;
+              const title = `[TEST-FAILURE] ${failure.test_name} in ${failure.test_file}`;
               const envList = failure.jobs.map(j => j.job);
               const ciLinks = failure.jobs.map(j => `- \`${j.job}\`: [CI link](${j.url})`).join('\n');
               const envLine = `**Environments:** ${envList.map(e => '`' + e + '`').join(', ')}`;
@@ -169,10 +181,8 @@ jobs:
               const existing = existingIssues.data.find(i => i.title === title);
 
               if (existing) {
-                // --- OLD ISSUE ---
                 console.log(`Found existing issue #${existing.number} for ${failure.name}`);
 
-                // Parse existing environments from description
                 const envMatch = existing.body.match(/\*\*Environments:\*\*\s*(.+)/);
                 const existingEnvs = envMatch
                   ? envMatch[1].match(/`([^`]+)`/g).map(e => e.replace(/`/g, ''))
@@ -181,8 +191,7 @@ jobs:
                 const newEnvs = envList.filter(e => !existingEnvs.includes(e));
 
                 if (newEnvs.length > 0) {
-                  // New environment found — update description
-                  console.log(`  New environments found: ${newEnvs.join(', ')}`);
+                  console.log(`  New environments: ${newEnvs.join(', ')}`);
                   const allEnvs = [...existingEnvs, ...newEnvs];
                   const newEnvLine = `**Environments:** ${allEnvs.map(e => '`' + e + '`').join(', ')}`;
                   const updatedBody = existing.body.replace(/\*\*Environments:\*\*\s*.+/, newEnvLine);
@@ -193,11 +202,8 @@ jobs:
                     issue_number: existing.number,
                     body: updatedBody,
                   });
-                } else {
-                  console.log(`  No new environments`);
                 }
 
-                // Always add a single comment with all CI links from this run
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -206,7 +212,6 @@ jobs:
                 });
 
               } else {
-                // --- NEW ISSUE ---
                 console.log(`Creating issue for ${failure.name}`);
                 await github.rest.issues.create({
                   owner: context.repo.owner,
@@ -216,11 +221,12 @@ jobs:
                   body: [
                     `**Summary**`,
                     ``,
-                    `\`${failure.name}\` test is failing in CI.`,
+                    `\`${failure.test_name}\` in \`${failure.test_file}\` is failing in CI.`,
                     ``,
                     `**Failing test(s)**`,
                     ``,
-                    `- Test name: \`${failure.name}\``,
+                    `- Test name: \`${failure.test_name}\``,
+                    `- Test file: \`${failure.test_file}\``,
                     `- CI link(s):`,
                     ciLinks,
                     ``,

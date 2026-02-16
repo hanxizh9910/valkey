@@ -604,7 +604,6 @@ proc print_test_summary {} {
 }
 
 proc the_end {} {
-    # TODO: print the status, exit with the right exit code.
     puts "\n                   The End\n"
     puts "Execution time of different units:"
     foreach {time name} $::clients_time_history {
@@ -616,6 +615,17 @@ proc the_end {} {
         foreach failed $::failed_tests {
             puts "*** $failed"
         }
+
+        # Write failures to JSON file for automated detection
+        set json_entries {}
+        foreach failed $::failed_tests {
+            set escaped [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $failed]
+            lappend json_entries "\"$escaped\""
+        }
+        set fp [open "test-failures.json" w]
+        puts $fp "\[[join $json_entries ","]\]"
+        close $fp
+
         if {!$::dont_clean} cleanup
         exit 1
     } else {
