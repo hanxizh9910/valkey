@@ -2117,7 +2117,7 @@ start_cluster 3 3 {tags {logreqres:skip external:skip cluster} overrides {cluste
             wait_for_countkeysinslot $not_owning_repl 16379 0
             wait_for_countkeysinslot $not_owning_repl 16381 0
             wait_for_countkeysinslot $not_owning_repl 16383 0
-            assert_equal "0" [R $not_owning_repl DBSIZE]
+            assert_equal "0" [R $not_owning_prim DBSIZE]
             wait_for_condition 50 1000 {
                 [R $not_owning_repl DBSIZE] == 0
             } else {
