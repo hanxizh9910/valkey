@@ -820,7 +820,7 @@ start_server {tags {"dual-channel-replication external:skip"}} {
             }
             set elapsed [expr {[clock milliseconds] - $start_time}]
             puts ">>> First wait_for_log_messages took ${elapsed}ms (timeout: 10000ms)"
-            
+
             # At this point rdb is loaded but psync hasn't been established yet. 
             # Pause the replica so the primary main process will wake up while the
             # replica is unresponsive. We expect the main process to fill the COB and disconnect the replica.
@@ -844,7 +844,14 @@ start_server {tags {"dual-channel-replication external:skip"}} {
         }
         # Waiting for the primary to enter the paused state, that is, make sure that bgsave is triggered.
         wait_process_paused -1
-        wait_for_log_messages 0 {"*Done loading RDB*"} $replica_loglines 100 100
+        set start_time [clock milliseconds]
+        if {[catch {wait_for_log_messages 0 {"*Done loading RDB*"} $replica_loglines 100 100} err]} {
+            set elapsed [expr {[clock milliseconds] - $start_time}]
+            puts ">>> Second wait_for_log_messages FAILED after ${elapsed}ms (timeout: 10000ms)"
+            error $err
+        }
+        set elapsed [expr {[clock milliseconds] - $start_time}]
+        puts ">>> Second wait_for_log_messages took ${elapsed}ms (timeout: 10000ms)"
         $replica replicaof no one
         # Resume the primary and make sure the sync is dropped.
         resume_process [srv -1 pid]
