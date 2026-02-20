@@ -813,10 +813,14 @@ start_server {tags {"dual-channel-replication external:skip"}} {
             $primary debug pause-after-fork 1
             $replica replicaof $primary_host $primary_port
             set start_time [clock milliseconds]
-            wait_for_log_messages 0 {"*Done loading RDB*"} 0 100 100
+            if {[catch {wait_for_log_messages 0 {"*Done loading RDB*"} 0 100 100} err]} {
+                set elapsed [expr {[clock milliseconds] - $start_time}]
+                puts ">>> First wait_for_log_messages FAILED after ${elapsed}ms (timeout: 10000ms)"
+                error $err
+            }
             set elapsed [expr {[clock milliseconds] - $start_time}]
             puts ">>> First wait_for_log_messages took ${elapsed}ms (timeout: 10000ms)"
-
+            
             # At this point rdb is loaded but psync hasn't been established yet. 
             # Pause the replica so the primary main process will wake up while the
             # replica is unresponsive. We expect the main process to fill the COB and disconnect the replica.
