@@ -855,7 +855,6 @@ start_server {tags {"dual-channel-replication external:skip"}} {
     $primary config set shutdown-timeout 0
 }
 
-
 start_server {tags {"dual-channel-replication external:skip"}} {
     set primary [srv 0 client]
     set primary_host [srv 0 host]
