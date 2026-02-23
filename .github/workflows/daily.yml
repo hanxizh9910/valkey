@@ -96,7 +96,7 @@ jobs:
       - name: testprep
         run: sudo apt-get install tcl8.6 tclx
       - name: test
-        run: ./runtest --single tests/unit/dummy-flaky --verbose --dump-logs
+        run: ./runtest --single unit/dummy-flaky --verbose --dump-logs
         continue-on-error: true
       - name: Upload test failures
         if: always()
@@ -131,7 +131,7 @@ jobs:
       - name: testprep
         run: sudo apt-get install tcl8.6 tclx
       - name: test
-        run: ./runtest --single tests/unit/dummy-flaky --verbose --dump-logs
+        run: ./runtest --single unit/dummy-flaky --verbose --dump-logs
         continue-on-error: true
       - name: Upload test failures
         if: always()
