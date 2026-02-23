@@ -231,6 +231,8 @@ int test_empty_buckets_rehashing(int argc, char **argv, int flags) {
     hashtableType type = {0};
     hashtable *ht = hashtableCreate(&type);
     long j;
+    long keep = 0;
+    size_t keep_bucket = 0;
 
     /* Populate and make sure there is no rehashing ongoing. */
     for (j = 0; j < 1000; j++) {
@@ -240,9 +242,23 @@ int test_empty_buckets_rehashing(int argc, char **argv, int flags) {
         TEST_ASSERT(!hashtableAdd(ht, (void *)0));
     }
 
-    /* Delete all elements except for one so there are a lot of empty buckets. */
+    /* Keep the entry from the highest bucket index so shrink rehashing doesn't
+     * complete too early with randomized hash seeds and start a second resize. */
+    size_t mask = hashtableBuckets(ht) - 1;
+    for (j = 0; j < 1000; j++) {
+        const void *key = (void *)j;
+        uint64_t hash = hashtableGenHashFunction((const char *)&key, sizeof(key));
+        size_t bucket_idx = hash & mask;
+        if (bucket_idx > keep_bucket) {
+            keep_bucket = bucket_idx;
+            keep = j;
+        }
+    }
+
+    /* Delete all elements except one so there are a lot of empty buckets. */
     hashtablePauseAutoShrink(ht);
-    for (j = 0; j < 1000 - 1; j++) {
+    for (j = 0; j < 1000; j++) {
+        if (j == keep) continue;
         TEST_ASSERT(hashtableDelete(ht, (void *)j));
     }
     hashtableResumeAutoShrink(ht);
@@ -251,7 +267,7 @@ int test_empty_buckets_rehashing(int argc, char **argv, int flags) {
 
     /* Add elements to trigger rehashing, a rehash step will rehash a maximum of 10 buckets. */
     for (j = 0; j < 10; j++) {
-        TEST_ASSERT(hashtableAdd(ht, (void *)j));
+        TEST_ASSERT(hashtableAdd(ht, (void *)(1000 + j)));
     }
     TEST_ASSERT(hashtableSize(ht) == 11);
     /* Check that at least 90 buckets are rehashed or that rehashing is completed. */
@@ -999,10 +1015,11 @@ int test_safe_iterator_invalidation(int argc, char **argv, int flags) {
     }
 
     /* Create safe and non-safe iterators */
-    hashtableIterator safe_iter1, safe_iter2, unsafe_iter;
+    hashtableIterator safe_iter1, safe_iter2, unsafe_iter, *dyn_safe_iter;
     hashtableInitIterator(&safe_iter1, ht, HASHTABLE_ITER_SAFE);
     hashtableInitIterator(&safe_iter2, ht, HASHTABLE_ITER_SAFE);
     hashtableInitIterator(&unsafe_iter, ht, 0);
+    dyn_safe_iter = hashtableCreateIterator(ht, HASHTABLE_ITER_SAFE);
 
     /* Verify iterators work before invalidation */
     void *entry;
@@ -1012,6 +1029,7 @@ int test_safe_iterator_invalidation(int argc, char **argv, int flags) {
     /* Reset iterators to test state */
     hashtableCleanupIterator(&safe_iter1);
     hashtableCleanupIterator(&safe_iter2);
+    hashtableReleaseIterator(dyn_safe_iter);
     hashtableInitIterator(&safe_iter1, ht, HASHTABLE_ITER_SAFE);
     hashtableInitIterator(&safe_iter2, ht, HASHTABLE_ITER_SAFE);
 

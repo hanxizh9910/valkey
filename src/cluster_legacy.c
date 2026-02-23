@@ -3629,17 +3629,38 @@ int clusterIsValidPacket(clusterLink *link) {
         explen = sizeof(clusterMsg) - sizeof(union clusterMsgData);
         explen += (sizeof(clusterMsgDataGossip) * count);
 
+        /* Make sure that the number of gossip messages fit in the remaining
+         * space in the message. */
+        if (totlen < explen) {
+            serverLog(LL_WARNING,
+                      "Received invalid %s packet with gossip count %d that exceeds "
+                      "total packet length (%lld)",
+                      clusterGetMessageTypeString(type), count, (unsigned long long)totlen);
+            return 0;
+        }
+
         /* If there is extension data, which doesn't have a fixed length,
          * loop through them and validate the length of it now. */
         if (msg->mflags[0] & CLUSTERMSG_FLAG0_EXT_DATA) {
             clusterMsgPingExt *ext = getInitialPingExt(msg, count);
             while (extensions--) {
+                /* Make sure there is at least enough memory for the extension information so
+                 * we can parse it. */
+                if ((totlen - explen) < sizeof(clusterMsgPingExt)) {
+                    serverLog(LL_WARNING,
+                              "Received invalid %s packet with extension data that exceeds "
+                              "total packet length (%lld)",
+                              clusterGetMessageTypeString(type), (unsigned long long)totlen);
+                    return 0;
+                }
                 uint32_t extlen = getPingExtLength(ext);
                 if (extlen % 8 != 0) {
                     serverLog(LL_WARNING, "Received a %s packet without proper padding (%d bytes)",
                               clusterGetMessageTypeString(type), (int)extlen);
                     return 0;
                 }
+                /* Similar check to earlier, but we want to make sure the extension length is valid
+                 * this time. */
                 if ((totlen - explen) < extlen) {
                     serverLog(LL_WARNING,
                               "Received invalid %s packet with extension data that exceeds "
@@ -7129,6 +7150,7 @@ void clusterCommandShards(client *c) {
 sds genClusterInfoString(sds info) {
     char *statestr[] = {"ok", "fail"};
     int slots_assigned = 0, slots_ok = 0, slots_pfail = 0, slots_fail = 0;
+    uint64_t my_epoch = myself ? nodeEpoch(myself) : 0;
 
     dictIterator *di = dictGetIterator(server.cluster->nodes);
     dictEntry *de;
@@ -7178,7 +7200,7 @@ sds genClusterInfoString(sds info) {
                      statestr[server.cluster->state], slots_assigned, slots_ok, slots_pfail, slots_fail,
                      nodes_pfail, nodes_fail, voting_nodes_pfail, voting_nodes_fail,
                      (unsigned long long)dictSize(server.cluster->nodes), server.cluster->size,
-                     (unsigned long long)server.cluster->currentEpoch, (unsigned long long)nodeEpoch(myself));
+                     (unsigned long long)server.cluster->currentEpoch, (unsigned long long)my_epoch);
 
     /* Show stats about messages sent and received. */
     long long tot_msg_sent = 0;
