@@ -2261,7 +2261,6 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error, int rd
                 }
                 sdsfree(field);
                 sdsfree(value);
-                /* continue to next field */
                 continue;
             }
 
