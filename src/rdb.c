@@ -2254,7 +2254,7 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error, int rd
                     initStaticStringObject(keyobj, key);
                     initStaticStringObject(fieldobj, field);
                     robj *argv[3];
-                    argv[0] = shared.hdel; /* shared.hdel should exist */
+                    argv[0] = shared.hdel;
                     argv[1] = &keyobj;
                     argv[2] = &fieldobj;
                     replicationFeedReplicas(dbid, argv, 3);
