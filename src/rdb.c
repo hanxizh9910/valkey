@@ -2259,7 +2259,6 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error, int rd
                     argv[2] = &fieldobj;
                     replicationFeedReplicas(dbid, argv, 3);
                 }
-                /* free the pair */
                 sdsfree(field);
                 sdsfree(value);
                 /* continue to next field */
