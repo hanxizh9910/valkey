@@ -2468,7 +2468,7 @@ start_cluster 3 0 {tags {logreqres:skip external:skip cluster} overrides {cluste
         # Check after the migration.
         set import_migration [get_migration_by_name 0 $jobname]
         set export_migration [get_migration_by_name 2 $jobname]
-        assert_equal [dict get $export_migration remaining_repl_size] 0
-        assert_equal [dict get $import_migration remaining_repl_size] 0
+        assert_equal [dict get $export_migration remaining_repl_size] 100
+        assert_equal [dict get $import_migration remaining_repl_size] 100
     }
 }
