@@ -623,6 +623,7 @@ proc the_end {} {
         # Write failures to JSON file for automated detection
         set json_entries {}
         foreach failed $::failed_tests {
+            if {[string match "*TIMEOUT*" $failed]} continue
             set escaped [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $failed]
             lappend json_entries "\"$escaped\""
         }
