@@ -1,0 +1,13 @@
+name: 'Upload Test Failures'
+description: 'Upload test-failures.json as artifact'
+runs:
+  using: 'composite'
+  steps:
+    - name: Upload test failures
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-failures-${{ github.job }}
+        path: test-failures.json
+        if-no-files-found: ignore
+        retention-days: 7

@@ -119,12 +119,7 @@ jobs:
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
       - name: Upload test failures
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-failures-${{ github.job }}
-          path: test-failures.json
-          if-no-files-found: ignore
-          retention-days: 7
+        uses: ./.github/actions/upload-test-failures
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -249,12 +244,7 @@ jobs:
         run: ./runtest --log-req-res --no-latency --dont-clean --force-resp3 --tags -slow --verbose --dump-logs  ${{github.event.inputs.test_args}}
       - name: Upload test failures
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-failures-${{ github.job }}
-          path: test-failures.json
-          if-no-files-found: ignore
-          retention-days: 7
+        uses: ./.github/actions/upload-test-failures
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --log-req-res --no-latency --dont-clean --force-resp3 --dont-pre-clean --verbose --dump-logs ${{github.event.inputs.test_args}}
