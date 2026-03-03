@@ -95,8 +95,6 @@ set ::solo_tests_count 0
 set ::debug_defrag 0
 set ::completed_tests 0
 set ::total_loops 1
-set ::junit_suite_name "valkey"
-set ::all_test_results {}
 
 # Expand a unit specification (test name, file, or directory) into a list
 # of canonical unit names relative to the tests directory.
@@ -384,7 +382,6 @@ proc test_server_main {} {
     set ::failed_tests {}
     set ::ok_count 0
     set ::err_count 0
-    set ::all_test_results {}
 
     # Enter the event loop to handle clients I/O
     after 100 test_server_cron
@@ -415,7 +412,6 @@ proc test_server_cron {} {
                     }
                     lappend ::failed_tests "\[[colorstr red TIMEOUT]\]: $test_name in $file"
                     incr ::err_count
-                    lappend ::all_test_results [list "err" "$test_name in $file" 0 "TIMEOUT: $test_name"]
                 }
             }
         }
@@ -475,24 +471,20 @@ proc read_from_test_client fd {
         }
         incr ::ok_count
         set ::active_clients_task($fd) "(OK) $data"
-        lappend ::all_test_results [list "ok" $data $elapsed ""]
     } elseif {$status eq {skip}} {
         if {!$::quiet} {
             puts "\[[colorstr yellow $status]\]: $data"
         }
-        lappend ::all_test_results [list "skip" $data 0 ""]
     } elseif {$status eq {ignore}} {
         if {!$::quiet} {
             puts "\[[colorstr cyan $status]\]: $data"
         }
-        lappend ::all_test_results [list "skip" $data 0 "ignored by tag"]
     } elseif {$status eq {err}} {
         set err "\[[colorstr red $status]\]: $data"
         puts $err
         lappend ::failed_tests $err
         incr ::err_count
         set ::active_clients_task($fd) "(ERR) $data"
-        lappend ::all_test_results [list "err" $data 0 $data]
         if {$::exit_on_failure} {
             puts "(Fast fail: test will exit now)"
             exit 1
@@ -504,11 +496,6 @@ proc read_from_test_client fd {
         }
     } elseif {$status eq {exception}} {
         puts "\[[colorstr red $status]\]: $data"
-        lappend ::all_test_results [list "err" $data 0 "EXCEPTION: $data"]
-        incr ::err_count
-        if {[catch {write_junit_xml} err]} {
-            puts "Warning: Failed to write JUnit XML: $err"
-        }
         kill_clients
         force_kill_all_servers
         exit 1
@@ -614,79 +601,6 @@ proc signal_idle_client fd {
     }
 }
 
-proc write_junit_xml {} {
-    set total [llength $::all_test_results]
-    set safe_name [regsub -all {[^a-zA-Z0-9_-]} $::junit_suite_name {_}]
-    set fp [open "test-results-${safe_name}.xml" w]
-    puts $fp {<?xml version="1.0" encoding="UTF-8"?>}
-
-    set suite_name [string map {& &amp; < &lt; > &gt; \" &quot;} $::junit_suite_name]
-
-    # Count skipped
-    set skipped_count 0
-    foreach result $::all_test_results {
-        if {[lindex $result 0] eq "skip"} { incr skipped_count }
-    }
-
-    puts $fp "<testsuites tests=\"$total\" failures=\"$::err_count\" skipped=\"$skipped_count\">"
-    puts $fp "  <testsuite name=\"$suite_name\" tests=\"$total\" failures=\"$::err_count\" skipped=\"$skipped_count\">"
-
-    # Build CI run URL if running in GitHub Actions
-    set run_url ""
-    if {[info exists ::env(GITHUB_SERVER_URL)] &&
-        [info exists ::env(GITHUB_REPOSITORY)] &&
-        [info exists ::env(GITHUB_RUN_ID)]} {
-        set run_url "$::env(GITHUB_SERVER_URL)/$::env(GITHUB_REPOSITORY)/actions/runs/$::env(GITHUB_RUN_ID)"
-    }
-
-    foreach result $::all_test_results {
-        lassign $result status data elapsed errmsg
-
-        # Parse "test name in tests/unit/foo.tcl"
-        set name $data
-        set file $::junit_suite_name
-        if {[regexp {(.+?)\s+in\s+(tests/\S+)} $data -> parsed_name parsed_file]} {
-            set name $parsed_name
-            set file $parsed_file
-        }
-
-        # XML-escape
-        set name [string map {& &amp; < &lt; > &gt; \" &quot;} $name]
-        set file [string map {& &amp; < &lt; > &gt; \" &quot;} $file]
-        set classname "$suite_name/$file"
-        set time_sec [expr {$elapsed / 1000.0}]
-
-        if {$status eq "ok"} {
-            puts $fp "    <testcase name=\"$name\" classname=\"$classname\" time=\"$time_sec\">"
-            if {$run_url ne ""} {
-                puts $fp "      <properties>"
-                puts $fp "        <property name=\"allure.link.github\" value=\"$run_url\"/>"
-                puts $fp "      </properties>"
-            }
-            puts $fp "    </testcase>"
-        } elseif {$status eq "skip"} {
-            puts $fp "    <testcase name=\"$name\" classname=\"$classname\" time=\"0.0\">"
-            set skip_msg [string map {& &amp; < &lt; > &gt; \" &quot;} $errmsg]
-            puts $fp "      <skipped message=\"$skip_msg\"/>"
-            puts $fp "    </testcase>"
-        } elseif {$status eq "err"} {
-            puts $fp "    <testcase name=\"$name\" classname=\"$classname\" time=\"$time_sec\">"
-            if {$run_url ne ""} {
-                puts $fp "      <properties>"
-                puts $fp "        <property name=\"allure.link.github\" value=\"$run_url\"/>"
-                puts $fp "      </properties>"
-            }
-            set escaped_msg [string map {& &amp; < &lt; > &gt; \" &quot;} $errmsg]
-            puts $fp "      <failure message=\"test failure\">$escaped_msg</failure>"
-            puts $fp "    </testcase>"
-        }
-    }
-
-    puts $fp "  </testsuite>"
-    puts $fp "</testsuites>"
-    close $fp
-}
-
 # The the_end function gets called when all the test units were already
 # executed, so the test finished.
 proc print_test_summary {} {
@@ -700,11 +614,6 @@ proc the_end {} {
         puts "  $time seconds - $name"
     }
     print_test_summary
-
-    if {[catch {write_junit_xml} err]} {
-        puts "Warning: Failed to write JUnit XML: $err"
-    }
-
     if {[llength $::failed_tests]} {
         puts "\n[colorstr bold-red {!!! WARNING}] The following tests failed:\n"
         foreach failed $::failed_tests {
@@ -820,9 +729,6 @@ proc print_help_screen {} {
         "--large-memory     Run tests using over 100mb."
         "--debug-defrag     Indicate the test is running against server compiled with"
         "                   DEBUG_FORCE_DEFRAG option."
-        "--junit-suite-name <name>"
-        "                   Set the suite name in JUnit XML output for Allure reporting."
-        "                   Default: valkey."
         "--help             Print this help screen."
     } "\n"]
 }
@@ -980,9 +886,6 @@ for {set j 0} {$j < [llength $argv]} {incr j} {
         set ::ignoredigest 1
     } elseif {$opt eq {--debug-defrag}} {
         set ::debug_defrag 1
-    } elseif {$opt eq {--junit-suite-name}} {
-        set ::junit_suite_name $arg
-        incr j
     } elseif {$opt eq {--help}} {
         print_help_screen
         exit 0
