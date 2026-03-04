@@ -191,7 +191,7 @@ jobs:
               const ciLinks = failure.jobs.map(j => `- \`${j.job}\`: [CI link](${j.url})`).join('\n');
               const envLine = `**Environments:** ${envList.map(e => '`' + e + '`').join(', ')}`;
 
-              const existing = existingIssues.data.find(i => i.title === title);
+              const existing = existingIssues.find(i => i.title === title);
 
               if (existing) {
                 console.log(`Found existing issue #${existing.number} for ${failure.name}`);
