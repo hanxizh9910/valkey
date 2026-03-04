@@ -119,6 +119,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -200,6 +205,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -260,6 +270,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -313,6 +328,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -363,6 +383,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -434,6 +459,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: |
@@ -492,6 +522,11 @@ jobs:
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: |
           ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs --tls --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: |
@@ -548,6 +583,11 @@ jobs:
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: |
           ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: |
@@ -601,6 +641,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest --io-threads --accurate --verbose --tags network --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: cluster tests
         if: true && !contains(github.event.inputs.skiptests, 'cluster')
         run: ./runtest-cluster --io-threads ${{github.event.inputs.cluster_test_args}}
@@ -648,6 +693,11 @@ jobs:
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: |
           ./runtest --io-threads --tls --accurate --verbose --tags network --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: cluster tests
         if: true && !contains(github.event.inputs.skiptests, 'cluster')
         run: |
@@ -779,6 +829,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest --valgrind --no-latency --verbose --clients 1 --timeout 2400 --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always()
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
   test-valgrind-misc:
     runs-on: ubuntu-latest
     if: |
@@ -862,6 +917,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest --valgrind --no-latency --verbose --clients 1 --timeout 2400 --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always()
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
   test-valgrind-no-malloc-usable-size-misc:
     runs-on: ubuntu-latest
     if: |
@@ -953,6 +1013,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest --accurate --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always()
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}-${{ matrix.compiler }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -1057,6 +1122,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest --accurate --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always()
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}-${{ matrix.compiler }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -1157,6 +1227,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest --accurate --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -1213,6 +1288,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -1288,6 +1368,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ matrix.name }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -1366,6 +1451,11 @@ jobs:
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: |
           ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs --tls-module --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ matrix.name }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: |
@@ -1442,6 +1532,11 @@ jobs:
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: |
           ./runtest --accurate --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ matrix.name }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: |
@@ -1493,6 +1588,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --clients 1 --no-latency --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --clients 1 --no-latency --dump-logs ${{github.event.inputs.test_args}}
@@ -1651,6 +1751,11 @@ jobs:
             sudo pkg install -y bash gmake lang/tcl86 lang/tclX
             gmake
             ./runtest --single unit/keyspace --single unit/auth --single unit/networking --single unit/protocol
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
   test-alpine-jemalloc:
     runs-on: ubuntu-latest
     if: |
@@ -1695,6 +1800,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -1748,6 +1858,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -1798,6 +1913,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: ./runtest --log-req-res --no-latency --dont-clean --force-resp3 --tags -slow --verbose --dump-logs  ${{github.event.inputs.test_args}}
+      - name: Upload test failures
+        if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+        uses: ./.github/actions/upload-test-failures
+        with:
+          job-name: ${{ github.job }}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: CFLAGS='-Werror' ./runtest-moduleapi --log-req-res --no-latency --dont-clean --force-resp3 --dont-pre-clean --verbose --dump-logs ${{github.event.inputs.test_args}}
@@ -1848,304 +1968,6 @@ jobs:
       - test-freebsd
       - test-alpine-jemalloc
       - test-alpine-libc-malloc
-      - reply-schemas-validator
-    steps:
-      - name: Collect job status
-        run: |
-          FAILED_JOBS=()
-          NEEDS_JSON='${{ toJSON(needs) }}'
-          JOBS=($(echo "$NEEDS_JSON" | jq 'keys' | tr -d '[] ,'))
-          for JOB in ${JOBS[@]}; do
-            JOB_RESULT=$(echo "$NEEDS_JSON" | jq ".[$JOB][\"result\"]" | tr -d '"')
-            if [ $JOB_RESULT = "failure" ]; then
-              FAILED_JOBS+=($JOB)
-            fi
-          done
-
-          if [[ ${#FAILED_JOBS[@]} -ne 0 ]]; then
-            echo "FAILED_JOBS=${FAILED_JOBS[@]}" >> $GITHUB_ENV
-            echo "STATUS=failure" >> $GITHUB_ENV
-          else
-            echo "STATUS=success" >> $GITHUB_ENV
-          fi
-      - name: Notify about results
-        uses: ravsamhq/notify-slack-action@042f29088bb3bdbda5b4ff7b4818466a277fa8f7 # v2.5.0
-        with:
-          status: ${{ env.STATUS }}
-          notify_when: "failure"
-          notification_title: "Daily test run <${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}|Failure>"
-          message_format: ":fire: Tests failed: ${{ env.FAILED_JOBS }}"
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_WEBHOOK_URL }}
-
-name: Daily
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled]
-    branches:
-      # any PR to a release branch.
-      - "[0-9].[0-9]"
-      - "unstable"
-    paths-ignore:
-      - '**/*.md'
-      - '**/00-RELEASENOTES'
-      - '**/COPYING'
-  schedule:
-    - cron: "0 0 * * *"
-  workflow_dispatch:
-    inputs:
-      skipjobs:
-        description: "jobs to skip (delete the ones you wanna keep, do not leave empty)"
-        default: "valgrind,sanitizer,tls,freebsd,macos,alpine,32bit,iothreads,ubuntu,rpm-distros,malloc,specific,fortify,reply-schema,arm,lttng"
-      skiptests:
-        description: "tests to skip (delete the ones you wanna keep, do not leave empty)"
-        default: "valkey,modules,sentinel,cluster,unittest,large-memory"
-      test_args:
-        description: "extra test arguments"
-        default: ""
-      cluster_test_args:
-        description: "extra cluster / sentinel test arguments"
-        default: ""
-      use_repo:
-        description: "repo owner and name"
-        default: "valkey-io/valkey"
-      use_git_ref:
-        description: "git branch or sha to use"
-        default: "unstable"
-  workflow_call:
-    inputs:
-      skipjobs:
-        description: "jobs to skip (delete the ones you wanna keep, do not leave empty)"
-        required: false
-        type: string
-        default: ""
-      skiptests:
-        description: "tests to skip (delete the ones you wanna keep, do not leave empty)"
-        required: false
-        type: string
-        default: ""
-      test_args:
-        description: "extra test arguments"
-        required: false
-        type: string
-        default: ""
-      cluster_test_args:
-        description: "extra cluster / sentinel test arguments"
-        required: false
-        type: string
-        default: ""
-      use_repo:
-        description: "repo owner and name"
-        required: false
-        type: string
-        default: "valkey-io/valkey"
-      use_git_ref:
-        description: "git branch or sha to use"
-        required: false
-        type: string
-        default: "unstable"
-concurrency:
-  group: daily-${{ github.head_ref || inputs.use_git_ref || github.event.inputs.use_git_ref || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'pull_request' || github.event.action != 'labeled' }}
-permissions:
-  contents: read
-  pull-requests: read
-jobs:
-  test-ubuntu-jemalloc:
-    runs-on: ubuntu-latest
-    # pull_request gate breakdown:
-    # 1) (base != unstable) OR PR currently has run-extra-tests.
-    # 2) Exclude all labeled events, except unstable + newly added run-extra-tests.
-    # 3) release branches run on opened/reopened/synchronize, never label-only events.
-    # 4) unstable runs when run-extra-tests is added, and on later code updates while it remains.
-    if: |
-      (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'schedule' && github.repository == 'valkey-io/valkey') ||
-        (github.event_name == 'pull_request' &&
-          (github.event.pull_request.base.ref != 'unstable' ||
-            contains(github.event.pull_request.labels.*.name, 'run-extra-tests')) &&
-          (github.event.action != 'labeled' ||
-            (github.event.pull_request.base.ref == 'unstable' && github.event.label.name == 'run-extra-tests'))
-        )) &&
-      !contains(github.event.inputs.skipjobs, 'ubuntu')
-    timeout-minutes: 1440
-    steps:
-      - name: prep
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
-        run: |
-          echo "GITHUB_REPOSITORY=${{inputs.use_repo || github.event.inputs.use_repo}}" >> $GITHUB_ENV
-          echo "GITHUB_HEAD_REF=${{inputs.use_git_ref || github.event.inputs.use_git_ref}}" >> $GITHUB_ENV
-          echo "skipjobs: ${{github.event.inputs.skipjobs}}"
-          echo "skiptests: ${{github.event.inputs.skiptests}}"
-          echo "test_args: ${{github.event.inputs.test_args}}"
-          echo "cluster_test_args: ${{github.event.inputs.cluster_test_args}}"
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: ${{ ((github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && env.GITHUB_REPOSITORY) || github.repository }}
-          ref: ${{ ((github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && env.GITHUB_HEAD_REF) || github.ref }}
-      - name: Install libbacktrace
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: ianlancetaylor/libbacktrace
-          ref: b9e40069c0b47a722286b94eb5231f7f05c08713
-          path: libbacktrace
-      - run: cd libbacktrace && ./configure && make && sudo make install
-      - name: make
-        run: make all-with-unit-tests SERVER_CFLAGS='-Werror' USE_LIBBACKTRACE=yes
-      - name: testprep
-        run: sudo apt-get install tcl8.6 tclx
-      - name: test
-        if: true && !contains(github.event.inputs.skiptests, 'valkey')
-        run: ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --verbose --dump-logs ${{github.event.inputs.test_args}}
-      - name: Upload test failures
-        if: always()
-        uses: ./.github/actions/upload-test-failures
-      - name: module api test
-        if: true && !contains(github.event.inputs.skiptests, 'modules')
-        run: CFLAGS='-Werror' ./runtest-moduleapi --verbose --dump-logs ${{github.event.inputs.test_args}}
-      - name: sentinel tests
-        if: true && !contains(github.event.inputs.skiptests, 'sentinel')
-        run: ./runtest-sentinel ${{github.event.inputs.cluster_test_args}}
-      - name: cluster tests
-        if: true && !contains(github.event.inputs.skiptests, 'cluster')
-        run: ./runtest-cluster ${{github.event.inputs.cluster_test_args}}
-      - name: unittest
-        if: true && !contains(github.event.inputs.skiptests, 'unittest')
-        run: ./src/valkey-unit-tests --accurate
-      - name: install Redis OSS 6.2 server for compatibility testing
-        run: |
-          cd tests/tmp
-          wget https://download.redis.io/releases/redis-6.2.14.tar.gz
-          tar -xvf redis-6.2.14.tar.gz
-      - name: make Redis OSS 6.2 server
-        run: |
-          cd tests/tmp/redis-6.2.14
-          make
-      - name: backward compatibility tests with OSS Redis 6.2
-        run: |
-          sudo apt-get install tcl8.6 tclx
-          ./runtest --verbose --tags compatible-redis --dump-logs --other-server-path tests/tmp/redis-6.2.14/src/redis-server
-      - name: install Redis OSS 7.0 server for compatibility testing
-        run: |
-          cd tests/tmp
-          wget https://download.redis.io/releases/redis-7.0.15.tar.gz
-          tar -xvf redis-7.0.15.tar.gz
-      - name: make Redis OSS 7.0 server
-        run: |
-          cd tests/tmp/redis-7.0.15
-          make
-      - name: backward compatibility tests with OSS Redis 7.0
-        run: |
-          sudo apt-get install tcl8.6 tclx
-          ./runtest --verbose --tags compatible-redis --dump-logs --other-server-path tests/tmp/redis-7.0.15/src/redis-server
-  build-old-macos-versions:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-14]
-    runs-on: ${{ matrix.os }}
-    if: |
-      (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'schedule' && github.repository == 'valkey-io/valkey') ||
-        (github.event_name == 'pull_request' &&
-          (github.event.pull_request.base.ref != 'unstable' ||
-            contains(github.event.pull_request.labels.*.name, 'run-extra-tests')) &&
-          (github.event.action != 'labeled' ||
-            (github.event.pull_request.base.ref == 'unstable' && github.event.label.name == 'run-extra-tests'))
-        )) &&
-      !contains(github.event.inputs.skipjobs, 'macos')
-    timeout-minutes: 1440
-    steps:
-      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
-        with:
-          xcode-version: latest
-      - name: prep
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
-        run: |
-          echo "GITHUB_REPOSITORY=${{inputs.use_repo || github.event.inputs.use_repo}}" >> $GITHUB_ENV
-          echo "GITHUB_HEAD_REF=${{inputs.use_git_ref || github.event.inputs.use_git_ref}}" >> $GITHUB_ENV
-          echo "skipjobs: ${{github.event.inputs.skipjobs}}"
-          echo "skiptests: ${{github.event.inputs.skiptests}}"
-          echo "test_args: ${{github.event.inputs.test_args}}"
-          echo "cluster_test_args: ${{github.event.inputs.cluster_test_args}}"
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: ${{ ((github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && env.GITHUB_REPOSITORY) || github.repository }}
-          ref: ${{ ((github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && env.GITHUB_HEAD_REF) || github.ref }}
-      - name: Install libbacktrace
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: ianlancetaylor/libbacktrace
-          ref: b9e40069c0b47a722286b94eb5231f7f05c08713
-          path: libbacktrace
-      - run: cd libbacktrace && ./configure && make && sudo make install
-      - name: make
-        run: make SERVER_CFLAGS='-Werror' USE_LIBBACKTRACE=yes
-  reply-schemas-validator:
-    runs-on: ubuntu-latest
-    timeout-minutes: 1440
-    if: |
-      (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'schedule' && github.repository == 'valkey-io/valkey') ||
-        (github.event_name == 'pull_request' &&
-          (github.event.pull_request.base.ref != 'unstable' ||
-            contains(github.event.pull_request.labels.*.name, 'run-extra-tests')) &&
-          (github.event.action != 'labeled' ||
-            (github.event.pull_request.base.ref == 'unstable' && github.event.label.name == 'run-extra-tests'))
-        )) &&
-      !contains(github.event.inputs.skipjobs, 'reply-schema')
-    steps:
-      - name: prep
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
-        run: |
-          echo "GITHUB_REPOSITORY=${{inputs.use_repo || github.event.inputs.use_repo}}" >> $GITHUB_ENV
-          echo "GITHUB_HEAD_REF=${{inputs.use_git_ref || github.event.inputs.use_git_ref}}" >> $GITHUB_ENV
-          echo "skipjobs: ${{github.event.inputs.skipjobs}}"
-          echo "skiptests: ${{github.event.inputs.skiptests}}"
-          echo "test_args: ${{github.event.inputs.test_args}}"
-          echo "cluster_test_args: ${{github.event.inputs.cluster_test_args}}"
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: ${{ ((github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && env.GITHUB_REPOSITORY) || github.repository }}
-          ref: ${{ ((github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && env.GITHUB_HEAD_REF) || github.ref }}
-      - name: Install libbacktrace
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: ianlancetaylor/libbacktrace
-          ref: b9e40069c0b47a722286b94eb5231f7f05c08713
-          path: libbacktrace
-      - run: cd libbacktrace && ./configure && make && sudo make install
-      - name: make
-        run: make SERVER_CFLAGS='-Werror -DLOG_REQ_RES' USE_LIBBACKTRACE=yes
-      - name: testprep
-        run: sudo apt-get install tcl8.6 tclx
-      - name: test
-        if: true && !contains(github.event.inputs.skiptests, 'valkey')
-        run: ./runtest --log-req-res --no-latency --dont-clean --force-resp3 --tags -slow --verbose --dump-logs  ${{github.event.inputs.test_args}}
-      - name: Upload test failures
-        if: always()
-        uses: ./.github/actions/upload-test-failures
-      - name: module api test
-        if: true && !contains(github.event.inputs.skiptests, 'modules')
-        run: CFLAGS='-Werror' ./runtest-moduleapi --log-req-res --no-latency --dont-clean --force-resp3 --dont-pre-clean --verbose --dump-logs ${{github.event.inputs.test_args}}
-      - name: sentinel tests
-        if: true && !contains(github.event.inputs.skiptests, 'sentinel')
-        run: ./runtest-sentinel --log-req-res --dont-clean --force-resp3 ${{github.event.inputs.cluster_test_args}}
-      - name: cluster tests
-        if: true && !contains(github.event.inputs.skiptests, 'cluster')
-        run: ./runtest-cluster --log-req-res --dont-clean --force-resp3 ${{github.event.inputs.cluster_test_args}}
-      - name: Install Python dependencies
-        uses: py-actions/py-dependency-install@30aa0023464ed4b5b116bd9fbdab87acf01a484e # v4.1.0
-        with:
-          path: "./utils/req-res-validator/requirements.txt"
-      - name: validator
-        run: ./utils/req-res-log-validator.py --verbose --fail-missing-reply-schemas ${{ (!contains(github.event.inputs.skiptests, 'valkey') && !contains(github.event.inputs.skiptests, 'module') && !contains(github.event.inputs.skiptests, 'sentinel') && !contains(github.event.inputs.skiptests, 'cluster')) && (inputs.test_args || github.event.inputs.test_args || '') == '' && (inputs.cluster_test_args || github.event.inputs.cluster_test_args || '') == '' && '--fail-commands-not-all-hit' || '' }}
-  notify-about-job-results:
-    runs-on: ubuntu-latest
-    if: always() && github.event_name == 'schedule' && github.repository == 'valkey-io/valkey'
-    needs:
-      - test-ubuntu-jemalloc
-      - build-old-macos-versions
       - reply-schemas-validator
     steps:
       - name: Collect job status

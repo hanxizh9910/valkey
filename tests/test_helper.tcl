@@ -624,6 +624,9 @@ proc the_end {} {
         set json_entries {}
         foreach failed $::failed_tests {
             if {[string match "*TIMEOUT*" $failed]} continue
+            # Skip sanitizer/valgrind errors — no clear test name
+            if {[string match {*Sanitizer error*} $failed]} continue
+            if {[string match {*Valgrind error*} $failed]} continue
             set escaped [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $failed]
             lappend json_entries "\"$escaped\""
         }
