@@ -87,7 +87,16 @@ jobs:
             const jobUrlMap = {};
             for (const job of jobs) {
               jobUrlMap[job.name] = job.html_url;
-              console.log(`${job.name} -> ${job.html_url}`);
+
+              const normalized = job.name
+                .replace(/\s*\(([^)]+)\)/g, '-$1')
+                .replace(/\s+/g, '-');
+              if (normalized !== job.name) {
+                jobUrlMap[normalized] = job.html_url;
+                console.log(`${job.name} -> ${job.html_url} (also: ${normalized})`);
+              } else {
+                console.log(`${job.name} -> ${job.html_url}`);
+              }
             }
 
             fs.writeFileSync('job-urls.json', JSON.stringify(jobUrlMap, null, 2));
