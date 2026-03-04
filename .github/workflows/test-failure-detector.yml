@@ -29,16 +29,17 @@ jobs:
             const fs = require('fs');
             const runId = context.payload.workflow_run.id;
             console.log(`Fetching artifacts from run ${runId}`);
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: runId,
+              },
+              (response) => response.data
+            );
 
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: runId,
-            });
-
-            const matched = artifacts.data.artifacts.filter(a => a.name.startsWith('test-failures-'));
-            console.log(`Found ${matched.length} test-failures artifacts`);
-
+            const matched = artifacts.filter(a => a.name.startsWith('test-failures-'));
             fs.mkdirSync('artifacts', { recursive: true });
 
             for (const artifact of matched) {
@@ -71,14 +72,20 @@ jobs:
             const fs = require('fs');
             const runId = context.payload.workflow_run.id;
 
-            const jobs = await github.rest.actions.listJobsForWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: runId,
-            });
+            const jobs = await github.paginate(
+              github.rest.actions.listJobsForWorkflowRun,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: runId,
+              },
+              (response) => response.data
+            );
+
+            console.log(`Found ${jobs.length} jobs`);
 
             const jobUrlMap = {};
-            for (const job of jobs.data.jobs) {
+            for (const job of jobs) {
               jobUrlMap[job.name] = job.html_url;
               console.log(`${job.name} -> ${job.html_url}`);
             }
@@ -165,14 +172,16 @@ jobs:
               }
             }
 
-            // Fetch all open test-failure issues
-            const existingIssues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: label,
-              state: 'open',
-              per_page: 100,
-            });
+            const existingIssues = await github.paginate(
+              github.rest.issues.listForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: label,
+                state: 'open',
+              },
+              (response) => response.data
+            );
 
             const today = new Date().toISOString().split('T')[0];
 
