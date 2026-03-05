@@ -623,7 +623,6 @@ proc the_end {} {
         # Write failures to JSON file for automated detection
         set json_entries {}
         foreach failed $::failed_tests {
-            if {[string match "*TIMEOUT*" $failed]} continue
             # Skip sanitizer/valgrind errors — no clear test name
             if {[string match {*Sanitizer error*} $failed]} continue
             if {[string match {*Valgrind error*} $failed]} continue
