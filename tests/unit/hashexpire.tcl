@@ -646,7 +646,7 @@ start_server {tags {"hashexpire"}} {
         r FLUSHALL
         r HSET myhash f1 v1
         set res [r HSETEX myhash NX FIELDS 2 f1 new1 f2 new2]
-        assert_equal 10000 $res
+        assert_equal 0 $res
         assert_equal v1 [r HGET myhash f1]
         assert_equal 0 [r HEXISTS myhash f2]
     }
@@ -664,7 +664,7 @@ start_server {tags {"hashexpire"}} {
         r FLUSHALL
         set res [r HSETEX myhash XX FIELDS 2 f1 v1 f2 v2]
         assert_equal 0 $res
-        assert_equal 10000 [r EXISTS myhash]
+        assert_equal 0 [r EXISTS myhash]
         assert_equal 0 [r HEXISTS myhash f1]
         assert_equal 0 [r HEXISTS myhash f2]
     }
@@ -744,7 +744,7 @@ start_server {tags {"hashexpire"}} {
         # Try again — key exists now, should block
         set res [r HSETEX myhash EX 10 NX FNX FIELDS 2 f3 v3 f4 v4]
         assert_equal 0 $res
-        assert_equal 10000 [r HEXISTS myhash f3]
+        assert_equal 0 [r HEXISTS myhash f3]
         assert_equal 0 [r HEXISTS myhash f4]
     }
 
