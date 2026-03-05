@@ -14,4 +14,12 @@ start_server {tags {"dummy"}} {
         r INCR counter
         assert_equal [r GET counter] "1"
     }
+    
+    test "test that hangs" {
+    after 999999
+    }
+
+    test "test that passes" {
+        assert_equal 1 1
+    }
 }
