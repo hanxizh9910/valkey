@@ -608,6 +608,7 @@ proc print_test_summary {} {
 }
 
 proc the_end {} {
+    # TODO: print the status, exit with the right exit code.
     puts "\n                   The End\n"
     puts "Execution time of different units:"
     foreach {time name} $::clients_time_history {
