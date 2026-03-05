@@ -1933,6 +1933,110 @@ jobs:
           path: "./utils/req-res-validator/requirements.txt"
       - name: validator
         run: ./utils/req-res-log-validator.py --verbose --fail-missing-reply-schemas ${{ (!contains(github.event.inputs.skiptests, 'valkey') && !contains(github.event.inputs.skiptests, 'module') && !contains(github.event.inputs.skiptests, 'sentinel') && !contains(github.event.inputs.skiptests, 'cluster')) && (inputs.test_args || github.event.inputs.test_args || '') == '' && (inputs.cluster_test_args || github.event.inputs.cluster_test_args || '') == '' && '--fail-commands-not-all-hit' || '' }}
+  consolidate-test-failures:
+    runs-on: ubuntu-latest
+    if: always() && !contains(github.event.inputs.skiptests, 'valkey')
+    permissions:
+      actions: write
+    needs:
+      - test-ubuntu-jemalloc
+      - test-ubuntu-arm
+      - test-ubuntu-jemalloc-fortify
+      - test-ubuntu-libc-malloc
+      - test-ubuntu-no-malloc-usable-size
+      - test-ubuntu-32bit
+      - test-ubuntu-tls
+      - test-ubuntu-tls-no-tls
+      # - test-ubuntu-io-threads
+      # - test-ubuntu-tls-io-threads
+      - test-ubuntu-reclaim-cache
+      - test-valgrind-test
+      - test-valgrind-misc
+      - test-valgrind-no-malloc-usable-size-test
+      - test-valgrind-no-malloc-usable-size-misc
+      - test-sanitizer-address
+      - test-sanitizer-address-large-memory
+      - test-sanitizer-undefined
+      - test-sanitizer-undefined-large-memory
+      - test-sanitizer-force-defrag
+      - test-ubuntu-lttng
+      - test-rpm-distros-jemalloc
+      - test-rpm-distros-tls-module
+      - test-rpm-distros-tls-module-no-tls
+      - test-macos-latest
+      - test-macos-latest-sentinel
+      - test-macos-latest-cluster
+      - build-old-macos-versions
+      - test-freebsd
+      - test-alpine-jemalloc
+      - test-alpine-libc-malloc
+      - reply-schemas-validator
+    steps:
+      - name: Download all failures
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-failures-*
+          path: individual-failures
+          merge-multiple: false
+
+      - name: Merge into single file
+        run: |
+          python3 << 'EOF'
+          import json, glob, os
+
+          merged = {}
+          for d in sorted(glob.glob("individual-failures/test-failures-*")):
+              job_name = os.path.basename(d).replace("test-failures-", "")
+              failures_file = os.path.join(d, "test-failures.json")
+              if os.path.exists(failures_file):
+                  with open(failures_file) as f:
+                      data = json.load(f)
+                  if data:
+                      merged[job_name] = data
+                      print(f"❌ {job_name}: {len(data)} failure(s)")
+                  else:
+                      print(f"✅ {job_name}: no failures")
+              else:
+                  print(f"⚠️ {job_name}: no file found")
+
+          with open("all-test-failures.json", "w") as f:
+              json.dump(merged, f, indent=2)
+
+          print(f"\nTotal: {len(merged)} jobs with failures")
+          EOF
+
+      - name: Upload consolidated failures
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-test-failures
+          path: all-test-failures.json
+          retention-days: 30
+
+      - name: Delete individual artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+              },
+              (response) => response.data
+            );
+
+            for (const artifact of artifacts) {
+              if (artifact.name.startsWith('test-failures-')) {
+                console.log(`Deleting: ${artifact.name}`);
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                });
+              }
+            }
+            console.log('Done. Individual artifacts deleted.');
   notify-about-job-results:
     runs-on: ubuntu-latest
     if: always() && github.event_name == 'schedule' && github.repository == 'valkey-io/valkey'
