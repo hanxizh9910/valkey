@@ -1993,11 +1993,11 @@ jobs:
                       data = json.load(f)
                   if data:
                       merged[job_name] = data
-                      print(f"❌ {job_name}: {len(data)} failure(s)")
+                      print(f"{job_name}: {len(data)} failure(s)")
                   else:
-                      print(f"✅ {job_name}: no failures")
+                      print(f"{job_name}: no failures")
               else:
-                  print(f"⚠️ {job_name}: no file found")
+                  print(f"{job_name}: no file found")
 
           with open("all-test-failures.json", "w") as f:
               json.dump(merged, f, indent=2)
