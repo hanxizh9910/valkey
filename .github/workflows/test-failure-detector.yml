@@ -121,25 +121,25 @@ jobs:
 
           grouped = {}
 
-          for job_name, entries in all_failures.items():
-              print(f"Processing: {job_name} ({len(entries)} failures)")
-              for entry in entries:
-                  failure = parse_failure_entry(entry, job_name)
-                  name = f"{failure['test_name']} in {failure['test_file']}"
+          for job_name, suites in all_failures.items():
+              for suite_name, entries in suites.items():
+                  for entry in entries:
+                      name = f"{entry['test_name']} in {entry['test_file']}"
 
-                  if name not in grouped:
-                      grouped[name] = {
-                          "name": name,
-                          "test_name": failure["test_name"],
-                          "test_file": failure["test_file"],
-                          "error": failure["error"],
-                          "jobs": []
-                      }
-                  grouped[name]["jobs"].append({
-                      "job": job_name,
-                      "url": job_urls.get(job_name, "")
-                  })
-                  print(f"  ❌ {name} in {job_name}")
+                      if name not in grouped:
+                          grouped[name] = {
+                              "name": name,
+                              "test_name": entry["test_name"],
+                              "test_file": entry["test_file"],
+                              "error": entry.get("error", ""),
+                              "jobs": []
+                          }
+                      grouped[name]["jobs"].append({
+                          "job": job_name,
+                          "suite": suite_name,
+                          "url": job_urls.get(job_name, "")
+                      })
+                      print(f"{name} in {job_name}/{suite_name}")
 
           unique_failures = list(grouped.values())
           print(f"\nTotal unique failures: {len(unique_failures)}")

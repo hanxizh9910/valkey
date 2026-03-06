@@ -607,32 +607,58 @@ proc print_test_summary {} {
     puts "\nTest Summary: [colorstr bold-green $::ok_count] passed, [colorstr bold-red $::err_count] failed"
 }
 
+proc write_test_failures {} {
+    set failures {}
+    foreach failed $::failed_tests {
+        if {[string match {*\[*TIMEOUT*\]*} $failed]} continue
+        if {[string match {*Sanitizer error*} $failed]} continue
+        if {[string match {*Valgrind error*} $failed]} continue
+
+        set status "err"
+        set test_name ""
+        set test_file ""
+        set error_msg ""
+
+        if {[regexp {\[(\w+)\]:\s*(.+?)\s+in\s+(tests/\S+\.tcl)\s*(.*)} $failed -> status test_name test_file error_msg]} {
+            # Successfully parsed
+        } else {
+            set test_name $failed
+            set test_file "unknown"
+            set error_msg $failed
+        }
+
+        set test_name [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $test_name]
+        set test_file [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $test_file]
+        set error_msg [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $error_msg]
+        set status [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $status]
+
+        lappend failures "\{\"test_name\":\"$test_name\",\"test_file\":\"$test_file\",\"status\":\"$status\",\"error\":\"$error_msg\"\}"
+    }
+
+    file mkdir "test-failures"
+    set fp [open "test-failures/valkey.json" w]
+    puts $fp "\[[join $failures ","]\]"
+    close $fp
+}
+
 proc the_end {} {
-    # TODO: print the status, exit with the right exit code.
     puts "\n                   The End\n"
     puts "Execution time of different units:"
     foreach {time name} $::clients_time_history {
         puts "  $time seconds - $name"
     }
     print_test_summary
+
+    # Write structured failures for automated detection
+    if {[catch {write_test_failures} err]} {
+        puts "Warning: Failed to write test failures: $err"
+    }
+
     if {[llength $::failed_tests]} {
         puts "\n[colorstr bold-red {!!! WARNING}] The following tests failed:\n"
         foreach failed $::failed_tests {
             puts "*** $failed"
         }
-
-        # Write failures to JSON file for automated detection
-        set json_entries {}
-        foreach failed $::failed_tests {
-            if {[string match {*\[*TIMEOUT*\]*} $failed]} continue
-            if {[string match {*Sanitizer error*} $failed]} continue
-            if {[string match {*Valgrind error*} $failed]} continue
-            set escaped [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $failed]
-            lappend json_entries "\"$escaped\""
-        }
-        set fp [open "test-failures.json" w]
-        puts $fp "\[[join $json_entries ","]\]"
-        close $fp
 
         if {!$::dont_clean} cleanup
         exit 1

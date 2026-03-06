@@ -1,5 +1,5 @@
 name: 'Upload Test Failures'
-description: 'Upload test-failures.json as artifact'
+description: 'Upload test failure artifacts'
 inputs:
   job-name:
     description: 'Unique name for the artifact'
@@ -11,6 +11,6 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: test-failures-${{ inputs.job-name }}
-        path: test-failures.json
+        path: test-failures/
         if-no-files-found: ignore
         retention-days: 7

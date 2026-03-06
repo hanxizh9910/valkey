@@ -1985,24 +1985,24 @@ jobs:
           import json, glob, os
 
           merged = {}
-          for d in sorted(glob.glob("individual-failures/test-failures-*")):
-              job_name = os.path.basename(d).replace("test-failures-", "")
-              failures_file = os.path.join(d, "test-failures.json")
-              if os.path.exists(failures_file):
-                  with open(failures_file) as f:
+
+          for job_dir in sorted(glob.glob("individual-failures/test-failures-*")):
+              job_name = os.path.basename(job_dir).replace("test-failures-", "")
+              merged[job_name] = {}
+
+              for suite_file in glob.glob(os.path.join(job_dir, "*.json")):
+                  suite_name = os.path.splitext(os.path.basename(suite_file))[0]
+                  with open(suite_file) as f:
                       data = json.load(f)
-                  if data:
-                      merged[job_name] = data
-                      print(f"{job_name}: {len(data)} failure(s)")
+                  merged[job_name][suite_name] = data
+                  count = len(data)
+                  if count:
+                      print(f"{job_name}/{suite_name}: {count} failure(s)")
                   else:
-                      print(f"{job_name}: no failures")
-              else:
-                  print(f"{job_name}: no file found")
+                      print(f"{job_name}/{suite_name}: no failures")
 
           with open("all-test-failures.json", "w") as f:
               json.dump(merged, f, indent=2)
-
-          print(f"\nTotal: {len(merged)} jobs with failures")
           EOF
 
       - name: Upload consolidated failures
