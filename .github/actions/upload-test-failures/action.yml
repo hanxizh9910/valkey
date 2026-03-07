@@ -13,4 +13,4 @@ runs:
         name: test-failures-${{ inputs.job-name }}
         path: test-failures/
         if-no-files-found: ignore
-        retention-days: 7
+        retention-days: 90
