@@ -110,8 +110,6 @@ jobs:
         run: |
           python3 << 'EOF'
           import json, os, sys
-          sys.path.insert(0, '.github/scripts')
-          from extract_failures import parse_failure_entry
 
           with open("job-urls.json") as f:
               job_urls = json.load(f)
