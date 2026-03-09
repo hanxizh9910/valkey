@@ -12,4 +12,3 @@ runs:
       with:
         name: test-failures-${{ inputs.job-name }}
         path: test-failures/
-
