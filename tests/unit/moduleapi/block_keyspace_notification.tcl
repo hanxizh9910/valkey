@@ -18,7 +18,7 @@ start_server {tags {"modules"}} {
         set rd2 [valkey_deferring_client]
         $rd2 hset c d e
         wait_for_blocked_clients_count 2
-        assert_equal "" [r b_keyspace.events]
+        assert_equal "sss" [r b_keyspace.events]
         wait_for_blocked_clients_count 1
         assert_equal "{event hset key b}" [r b_keyspace.events]
         wait_for_blocked_clients_count 0

@@ -14,7 +14,7 @@ start_server {tags {"modules"}} {
 
         # Verify returned id is the same as our current id and
         # we are authenticated with the specified user
-        assert_equal [r acl whoami] "global"
+        assert_equal [r acl whoami] "globall"
     }
 
     test {De-authenticating clients is tracked and kills clients} {
@@ -36,7 +36,7 @@ start_server {tags {"modules"}} {
     }
 
     test {Modules can authenticate with ACL users} {
-        assert_equal [r acl whoami] "default"
+        assert_equal [r acl whoami] "defaultt"
 
         # Create user to auth into
         r acl setuser auth-module-test on allkeys allcommands
