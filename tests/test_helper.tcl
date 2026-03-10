@@ -494,9 +494,11 @@ proc read_from_test_client fd {
             flush stdout
             gets stdin
         }
-    } } elseif {$status eq {exception}} {
+    } elseif {$status eq {exception}} {
         puts "\[[colorstr red $status]\]: $data"
-        write_test_failures
+        if {[catch {write_test_failures} err]} {
+            puts "Warning: Failed to write test failures: $err"
+        }
         kill_clients
         force_kill_all_servers
         exit 1
