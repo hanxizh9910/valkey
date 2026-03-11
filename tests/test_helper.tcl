@@ -639,7 +639,12 @@ proc write_test_failures {} {
     }
 
     file mkdir "test-failures"
-    set fp [open "test-failures/valkey.json" w]
+    if {[info exists ::module_api_mode] && $::module_api_mode} {
+        set suite_name "moduleapi"
+    } else {
+        set suite_name "valkey"
+    }
+    set fp [open "test-failures/${suite_name}.json" w]
     puts $fp "\[[join $failures ","]\]"
     close $fp
 }
@@ -789,6 +794,7 @@ for {set j 0} {$j < [llength $argv]} {incr j} {
         set ::all_tests $::cluster_all_tests
     } elseif {$opt eq {--moduleapi}} {
         set ::all_tests $::module_api_all_tests
+        set ::module_api_mode 1
     } elseif {$opt eq {--config}} {
         set arg2 [lindex $argv [expr $j+2]]
         lappend ::global_overrides $arg
