@@ -125,7 +125,7 @@ jobs:
         run: CFLAGS='-Werror' ./runtest-moduleapi --single unit/moduleapi/dummy-flaky --failures-json test-failures/moduleapi.json --verbose --dump-logs ${{github.event.inputs.test_args}}
       - name: sentinel tests
         if: true && !contains(github.event.inputs.skiptests, 'sentinel')
-        run: ./runtest-sentinel --failures-json test-failures/sentinel.json ${{github.event.inputs.cluster_test_args}}
+        run: ./runtest-sentinel --single dummy --failures-json test-failures/sentinel.json ${{github.event.inputs.cluster_test_args}}
       - name: cluster tests
         if: true && !contains(github.event.inputs.skiptests, 'cluster')
         run: ./runtest-cluster --failures-json test-failures/cluster.json ${{github.event.inputs.cluster_test_args}}
@@ -1925,7 +1925,7 @@ jobs:
         run: CFLAGS='-Werror' ./runtest-moduleapi --single unit/moduleapi/dummy-flaky --failures-json test-failures/moduleapi.json --log-req-res --no-latency --dont-clean --force-resp3 --dont-pre-clean --verbose --dump-logs ${{github.event.inputs.test_args}}
       - name: sentinel tests
         if: true && !contains(github.event.inputs.skiptests, 'sentinel')
-        run: ./runtest-sentinel --failures-json test-failures/sentinel.json --log-req-res --dont-clean --force-resp3 ${{github.event.inputs.cluster_test_args}}
+        run: ./runtest-sentinel --single dummy --failures-json test-failures/sentinel.json --log-req-res --dont-clean --force-resp3 ${{github.event.inputs.cluster_test_args}}
       - name: cluster tests
         if: true && !contains(github.event.inputs.skiptests, 'cluster')
         run: ./runtest-cluster --failures-json test-failures/cluster.json --log-req-res --dont-clean --force-resp3 ${{github.event.inputs.cluster_test_args}}
