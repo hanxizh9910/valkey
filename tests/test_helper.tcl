@@ -73,6 +73,7 @@ set ::file ""; # If set, runs only the tests in this comma separated list
 set ::curfile ""; # Hold the filename of the current suite
 set ::accurate 0; # If true runs fuzz tests with more iterations
 set ::force_failure 0
+set ::failures_json_file ""; # If set, write failures JSON to this path
 set ::timeout 1200; # 20 minutes without progresses will quit the test.
 set ::last_progress [clock seconds]
 set ::active_servers {} ; # Pids of active server instances.
@@ -638,13 +639,15 @@ proc write_test_failures {} {
         lappend failures "\{\"test_name\":\"$test_name\",\"test_file\":\"$test_file\",\"status\":\"$status\",\"error\":\"$error_msg\"\}"
     }
 
-    file mkdir "test-failures"
-    if {[info exists ::module_api_mode] && $::module_api_mode} {
-        set suite_name "moduleapi"
-    } else {
-        set suite_name "valkey"
+    if {$::failures_json_file eq ""} {
+        return
     }
-    set fp [open "test-failures/${suite_name}.json" w]
+
+    set outdir [file dirname $::failures_json_file]
+    if {$outdir ne "."} {
+        file mkdir $outdir
+    }
+    set fp [open $::failures_json_file w]
     puts $fp "\[[join $failures ","]\]"
     close $fp
 }
@@ -729,6 +732,8 @@ proc print_help_screen {} {
         "--clients <num>    Number of test clients (default 16)."
         "--timeout <sec>    Test timeout in seconds (default 20 min)."
         "--force-failure    Force the execution of a test that always fails."
+        "--failures-json <path>"
+        "                   Write test failures to the specified JSON file."
         "--config <k> <v>   Extra config file argument."
         "--skipfile <file>  Name of a file containing test names or regexp patterns (if"
         "                   <test> starts with '/') that should be skipped (one per"
@@ -853,6 +858,9 @@ for {set j 0} {$j < [llength $argv]} {incr j} {
         set ::accurate 1
     } elseif {$opt eq {--force-failure}} {
         set ::force_failure 1
+    } elseif {$opt eq {--failures-json}} {
+        set ::failures_json_file $arg
+        incr j
     } elseif {$opt eq {--single}} {
         foreach unit [expand_unit_spec $arg] {
             lappend ::single_tests $unit
