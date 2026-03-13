@@ -4,10 +4,10 @@ start_server {tags {"modules dummy"}} {
         assert_equal [r GET mykey] "myvalue"
     }
 
-#    test "moduleapi-dummy - intentional failure" {
-#        r SET mykey myvalue
-#        assert_equal [r GET mykey] "wrongvalue"
-#    }
+    test "moduleapi-dummy - intentional failure" {
+        r SET mykey myvalue
+        assert_equal [r GET mykey] "wrongvalue"
+    }
 
     test "moduleapi-dummy - another passing test" {
         r SET counter 0
