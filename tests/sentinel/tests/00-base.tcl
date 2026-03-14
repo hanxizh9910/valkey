@@ -46,7 +46,7 @@ test "SENTINEL MYID return the sentinel instance ID" {
 test "SENTINEL INFO CACHE returns the cached info" {
     set res [S 0 SENTINEL INFO-CACHE mymaster]
     assert_morethan_equal [llength $res] 2
-    assert_equal "mymaster111" [lindex $res 0]
+    assert_equal "mymaster" [lindex $res 0]
 
     set res [lindex $res 1]
     assert_morethan_equal [llength $res] 2
