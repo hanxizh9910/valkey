@@ -315,7 +315,6 @@ proc parse_options {} {
         } elseif {$opt eq {--loop}} {
             set ::loop 1
         } elseif {$opt eq {--failures-json}} {
-            # Path is relative to project root, but we've cd'd into tests/<suite>/tmp
             set ::failures_json_file [file normalize "../../../$val"]
             incr j
         } elseif {$opt eq {--log-req-res}} {
