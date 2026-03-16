@@ -800,7 +800,6 @@ for {set j 0} {$j < [llength $argv]} {incr j} {
         set ::all_tests $::cluster_all_tests
     } elseif {$opt eq {--moduleapi}} {
         set ::all_tests $::module_api_all_tests
-        set ::module_api_mode 1
     } elseif {$opt eq {--config}} {
         set arg2 [lindex $argv [expr $j+2]]
         lappend ::global_overrides $arg
