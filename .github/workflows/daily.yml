@@ -1138,10 +1138,10 @@ jobs:
           fi
       - name: large memory tests
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
-        run: ./runtest --accurate --failures-json test-failures/valkey.json --verbose --dump-logs --clients 5 --large-memory --tags large-memory ${{github.event.inputs.test_args}}
+        run: ./runtest --accurate --failures-json test-failures/valkey.json --verbose --dump-logs --clients 1 --large-memory --tags large-memory ${{github.event.inputs.test_args}}
       - name: large memory module api tests
         if: true && !contains(github.event.inputs.skiptests, 'modules')
-        run: CFLAGS='-Werror' ./runtest-moduleapi --failures-json test-failures/moduleapi.json --verbose --dump-logs --clients 5 --large-memory --tags large-memory ${{github.event.inputs.test_args}}
+        run: CFLAGS='-Werror' ./runtest-moduleapi --failures-json test-failures/moduleapi.json --verbose --dump-logs --clients 1 --large-memory --tags large-memory ${{github.event.inputs.test_args}}
       - name: Memory usage summary
         if: always()
         run: |
@@ -1286,10 +1286,10 @@ jobs:
           fi
       - name: large memory tests
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
-        run: ./runtest --accurate --failures-json test-failures/valkey.json --verbose --dump-logs --clients 5 --large-memory --tags large-memory ${{github.event.inputs.test_args}}
+        run: ./runtest --accurate --failures-json test-failures/valkey.json --verbose --dump-logs --clients 1 --large-memory --tags large-memory ${{github.event.inputs.test_args}}
       - name: large memory module api tests
         if: true && !contains(github.event.inputs.skiptests, 'modules')
-        run: CFLAGS='-Werror' ./runtest-moduleapi --failures-json test-failures/moduleapi.json --verbose --dump-logs --clients 5 --large-memory --tags large-memory ${{github.event.inputs.test_args}}
+        run: CFLAGS='-Werror' ./runtest-moduleapi --failures-json test-failures/moduleapi.json --verbose --dump-logs --clients 1 --large-memory --tags large-memory ${{github.event.inputs.test_args}}
       - name: Memory usage summary
         if: always()
         run: |
