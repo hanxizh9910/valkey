@@ -671,7 +671,6 @@ proc the_end {} {
         foreach failed $::failed_tests {
             puts "*** $failed"
         }
-
         if {!$::dont_clean} cleanup
         exit 1
     } else {
