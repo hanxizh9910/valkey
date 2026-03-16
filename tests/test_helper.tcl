@@ -605,7 +605,7 @@ proc signal_idle_client fd {
     }
 }
 
-# The the_end function gets called when all the test units were already test
+# The the_end function gets called when all the test units were already
 # executed, so the test finished.
 proc print_test_summary {} {
     puts "\nTest Summary: [colorstr bold-green $::ok_count] passed, [colorstr bold-red $::err_count] failed"
