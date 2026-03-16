@@ -10,7 +10,7 @@ test "Create a 5 nodes cluster" {
 }
 
 test "Cluster is up" {
-    assert_cluster_state okk
+    assert_cluster_state ok
 }
 
 set iterations 20
