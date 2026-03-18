@@ -205,8 +205,9 @@ jobs:
                 console.log(`Found existing issue #${existing.number} for ${failure.name}`);
 
                 const envMatch = existing.body.match(/\*\*Environments:\*\*\s*(.+)/);
-                const existingEnvs = envMatch
-                  ? envMatch[1].match(/`([^`]+)`/g).map(e => e.replace(/`/g, ''))
+                const envInner = envMatch ? envMatch[1].match(/`([^`]+)`/g) : null;
+                const existingEnvs = envInner
+                  ? envInner.map(e => e.replace(/`/g, ''))
                   : [];
 
                 const newEnvs = envList.filter(e => !existingEnvs.includes(e));
