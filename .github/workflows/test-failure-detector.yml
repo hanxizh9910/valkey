@@ -3,6 +3,8 @@ name: Test Failure Detector
 on:
   workflow_run:
     workflows: ["Daily"]
+    branches:
+      - unstable
     types:
       - completed
 
