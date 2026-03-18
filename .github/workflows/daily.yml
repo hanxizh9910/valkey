@@ -2082,7 +2082,6 @@ jobs:
       - test-ubuntu-tls-no-tls
       - test-ubuntu-io-threads
       - test-ubuntu-tls-io-threads
-      - test-ubuntu-reclaim-cache
       - test-valgrind-test
       - test-valgrind-misc
       - test-valgrind-no-malloc-usable-size-test
@@ -2099,7 +2098,6 @@ jobs:
       - test-macos-latest
       - test-macos-latest-sentinel
       - test-macos-latest-cluster
-      - build-old-macos-versions
       - test-freebsd
       - test-alpine-jemalloc
       - test-alpine-libc-malloc
