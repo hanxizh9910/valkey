@@ -635,10 +635,10 @@ proc write_test_failures {} {
             set error_msg $failed
         }
 
-        set test_name [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $test_name]
-        set test_file [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $test_file]
-        set error_msg [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $error_msg]
-        set status [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $status]
+        set test_name [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" "\\r" "\t" "\\t" "\b" "\\b" "\f" "\\f"} $test_name]
+        set test_file [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" "\\r" "\t" "\\t" "\b" "\\b" "\f" "\\f"} $test_file]
+        set error_msg [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" "\\r" "\t" "\\t" "\b" "\\b" "\f" "\\f"} $error_msg]
+        set status [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" "\\r" "\t" "\\t" "\b" "\\b" "\f" "\\f"} $status]
 
         lappend failures "\{\"test_name\":\"$test_name\",\"test_file\":\"$test_file\",\"status\":\"$status\",\"error\":\"$error_msg\"\}"
     }
