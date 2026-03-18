@@ -436,7 +436,7 @@ proc test {descr code} {
         if {[string match "assertion:*" $error]} {
             set msg [string range $error 10 end]
             puts [colorstr red "FAILED: $msg"]
-            lappend ::failed_tests [list $descr [expr {[info exists ::cur_test_file] ? $::cur_test_file : "unknown"}] $msg]
+            lappend ::failed_tests [list $descr $::cur_test_file $msg]
             if {$::pause_on_error} pause_on_error
             puts [colorstr red "(Jumping to next unit after error)"]
             return -code continue
