@@ -612,6 +612,10 @@ proc print_test_summary {} {
 }
 
 proc write_test_failures {} {
+    if {$::failures_json_file eq ""} {
+        return
+    }
+
     set failures {}
     foreach failed $::failed_tests {
         if {[string match {*\[*TIMEOUT*\]*} $failed]} continue
@@ -637,10 +641,6 @@ proc write_test_failures {} {
         set status [string map {"\\" "\\\\" "\"" "\\\"" "\n" "\\n" "\r" ""} $status]
 
         lappend failures "\{\"test_name\":\"$test_name\",\"test_file\":\"$test_file\",\"status\":\"$status\",\"error\":\"$error_msg\"\}"
-    }
-
-    if {$::failures_json_file eq ""} {
-        return
     }
 
     set outdir [file dirname $::failures_json_file]
