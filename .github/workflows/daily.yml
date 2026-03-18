@@ -541,11 +541,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: |
-          ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --failures-json test-failures/valkey.json --verbose --dump-logs --tls --dump-logs ${{github.event.inputs.test_args}}
+          ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --failures-json test-failures/valkey.json --verbose --dump-logs --tls ${{github.event.inputs.test_args}}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: |
-          CFLAGS='-Werror' ./runtest-moduleapi --failures-json test-failures/moduleapi.json --verbose --dump-logs --tls --dump-logs ${{github.event.inputs.test_args}}
+          CFLAGS='-Werror' ./runtest-moduleapi --failures-json test-failures/moduleapi.json --verbose --dump-logs --tls ${{github.event.inputs.test_args}}
       - name: sentinel tests
         if: true && !contains(github.event.inputs.skiptests, 'sentinel')
         run: |
@@ -1573,11 +1573,11 @@ jobs:
       - name: test
         if: true && !contains(github.event.inputs.skiptests, 'valkey')
         run: |
-          ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --failures-json test-failures/valkey.json --verbose --dump-logs --tls-module --dump-logs ${{github.event.inputs.test_args}}
+          ./runtest ${{ github.event_name != 'pull_request' && '--accurate' || '' }} --failures-json test-failures/valkey.json --verbose --dump-logs --tls-module ${{github.event.inputs.test_args}}
       - name: module api test
         if: true && !contains(github.event.inputs.skiptests, 'modules')
         run: |
-          CFLAGS='-Werror' ./runtest-moduleapi --failures-json test-failures/moduleapi.json --verbose --dump-logs --tls-module --dump-logs ${{github.event.inputs.test_args}}
+          CFLAGS='-Werror' ./runtest-moduleapi --failures-json test-failures/moduleapi.json --verbose --dump-logs --tls-module ${{github.event.inputs.test_args}}
       - name: sentinel tests
         if: true && !contains(github.event.inputs.skiptests, 'sentinel')
         run: |
