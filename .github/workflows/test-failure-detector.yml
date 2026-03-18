@@ -25,6 +25,7 @@ jobs:
 
       # Step 1: Download consolidated artifact
       - name: Download failures
+        id: download
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
@@ -45,6 +46,7 @@ jobs:
             const matched = artifacts.find(a => a.name === 'all-test-failures');
             if (!matched) {
               console.log('No all-test-failures artifact found');
+              core.setOutput('found', 'false');
               return;
             }
 
@@ -56,20 +58,18 @@ jobs:
               archive_format: 'zip',
             });
             fs.writeFileSync('all-test-failures.zip', Buffer.from(download.data));
+            core.setOutput('found', 'true');
 
       - name: Unzip artifact
+        if: steps.download.outputs.found == 'true'
         run: |
-          if [ -f all-test-failures.zip ]; then
-            unzip -o all-test-failures.zip
-            echo "=== Content ==="
-            cat all-test-failures.json
-          else
-            echo "No artifact found"
-            echo '{}' > all-test-failures.json
-          fi
+          unzip -o all-test-failures.zip
+          echo "=== Content ==="
+          cat all-test-failures.json
 
       # Step 2: Get per-job URLs
       - name: Get job URLs
+        if: steps.download.outputs.found == 'true'
         id: jobs
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
@@ -108,6 +108,7 @@ jobs:
 
       # Step 3: Parse and merge failures
       - name: Merge failures
+        if: steps.download.outputs.found == 'true'
         id: merge
         run: |
           python3 << 'EOF'
