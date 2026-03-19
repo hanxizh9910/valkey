@@ -14,7 +14,7 @@ start_server {tags {"modules"}} {
 
         # Verify returned id is the same as our current id and
         # we are authenticated with the specified user
-        assert_equal [r acl whoami] "global"
+        assert_equal [r acl whoami] "globall"
     }
 
     test {De-authenticating clients is tracked and kills clients} {
