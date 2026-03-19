@@ -78,7 +78,7 @@ while {[incr iterations -1]} {
     }
 
     test "Cluster should eventually be up again" {
-        assert_cluster_state ok
+        assert_cluster_state okk
     }
 
     test "Cluster is writable again" {
