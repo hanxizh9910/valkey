@@ -73,7 +73,7 @@ set ::file ""; # If set, runs only the tests in this comma separated list
 set ::curfile ""; # Hold the filename of the current suite
 set ::accurate 0; # If true runs fuzz tests with more iterations
 set ::force_failure 0
-set ::failures_json_file ""; # If set, write failures JSON to this path
+set ::failures_output_file ""; # If set, write failures JSON to this path
 set ::timeout 1200; # 20 minutes without progresses will quit the test.
 set ::last_progress [clock seconds]
 set ::active_servers {} ; # Pids of active server instances.
@@ -612,7 +612,7 @@ proc print_test_summary {} {
 }
 
 proc write_test_failures {} {
-    if {$::failures_json_file eq ""} {
+    if {$::failures_output_file eq ""} {
         return
     }
 
@@ -643,11 +643,11 @@ proc write_test_failures {} {
         lappend failures "\{\"test_name\":\"$test_name\",\"test_file\":\"$test_file\",\"status\":\"$status\",\"error\":\"$error_msg\"\}"
     }
 
-    set outdir [file dirname $::failures_json_file]
+    set outdir [file dirname $::failures_output_file]
     if {$outdir ne "."} {
         file mkdir $outdir
     }
-    set fp [open $::failures_json_file w]
+    set fp [open $::failures_output_file w]
     puts $fp "\[[join $failures ","]\]"
     close $fp
 }
@@ -732,7 +732,7 @@ proc print_help_screen {} {
         "--clients <num>    Number of test clients (default 16)."
         "--timeout <sec>    Test timeout in seconds (default 20 min)."
         "--force-failure    Force the execution of a test that always fails."
-        "--failures-json <path>"
+        "--failures-output <path>"
         "                   Write test failures to the specified JSON file."
         "--config <k> <v>   Extra config file argument."
         "--skipfile <file>  Name of a file containing test names or regexp patterns (if"
@@ -857,8 +857,8 @@ for {set j 0} {$j < [llength $argv]} {incr j} {
         set ::accurate 1
     } elseif {$opt eq {--force-failure}} {
         set ::force_failure 1
-    } elseif {$opt eq {--failures-json}} {
-        set ::failures_json_file $arg
+    } elseif {$opt eq {--failures-output}} {
+        set ::failures_output_file $arg
         incr j
     } elseif {$opt eq {--single}} {
         foreach unit [expand_unit_spec $arg] {

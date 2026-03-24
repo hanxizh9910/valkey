@@ -24,7 +24,7 @@ set ::dont_clean 0
 set ::simulate_error 0
 set ::failed 0
 set ::failed_tests {}
-set ::failures_json_file ""
+set ::failures_output_file ""
 set ::sentinel_instances {}
 set ::valkey_instances {}
 set ::global_config {}
@@ -314,8 +314,8 @@ proc parse_options {} {
             set ::stop_on_failure 1
         } elseif {$opt eq {--loop}} {
             set ::loop 1
-        } elseif {$opt eq {--failures-json}} {
-            set ::failures_json_file [file normalize "../../../$val"]
+        } elseif {$opt eq {--failures-output}} {
+            set ::failures_output_file [file normalize "../../../$val"]
             incr j
         } elseif {$opt eq {--log-req-res}} {
             set ::log_req_res 1
@@ -335,7 +335,7 @@ proc parse_options {} {
             puts "--fast-fail             Exit immediately once the first test fails."
             puts "--stop                  Blocks once the first test fails."
             puts "--loop                  Execute the specified set of tests forever."
-            puts "--failures-json <path>  Write test failures to the specified JSON file."
+            puts "--failures-output <path>  Write test failures to the specified JSON file."
             puts "--help                  Shows this help."
             exit 0
         } else {
@@ -529,7 +529,7 @@ while 1 {
 }
 
 proc write_test_failures {} {
-    if {$::failures_json_file eq ""} {
+    if {$::failures_output_file eq ""} {
         return
     }
 
@@ -546,11 +546,11 @@ proc write_test_failures {} {
         lappend failures "\{\"test_name\":\"$test_name\",\"test_file\":\"$test_file\",\"status\":\"err\",\"error\":\"$error_msg\"\}"
     }
 
-    set outdir [file dirname $::failures_json_file]
+    set outdir [file dirname $::failures_output_file]
     if {$outdir ne "."} {
         file mkdir $outdir
     }
-    set fp [open $::failures_json_file w]
+    set fp [open $::failures_output_file w]
     puts $fp "\[[join $failures ","]\]"
     close $fp
 }
