@@ -24,7 +24,7 @@ start_multiple_servers 3 [list overrides $base_conf] {
                             127.0.0.1:[srv -2 port]
 
         wait_for_condition 1000 50 {
-            [CI 1 cluster_state] eq {ok} &&
+            [CI 1 cluster_state] eq {okk} &&
             [CI 2 cluster_state] eq {ok}
         } else {
             fail "Cluster doesn't stabilize"
