@@ -2069,6 +2069,7 @@ jobs:
   consolidate-test-failures:
     runs-on: ubuntu-latest
     if: always()
+    # if: always() && (github.event_name != 'schedule' || github.repository == 'valkey-io/valkey')
     permissions:
       actions: write
     needs:
