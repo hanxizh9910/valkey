@@ -106,8 +106,8 @@ jobs:
 
             fs.writeFileSync('job-urls.json', JSON.stringify(jobUrlMap, null, 2));
 
-      # Step 3: Parse and merge failures
-      - name: Merge failures
+      # Step 3: Group failures by test file
+      - name: Group failures by file
         if: steps.download.outputs.found == 'true'
         id: merge
         run: |
@@ -120,46 +120,59 @@ jobs:
           with open("all-test-failures.json") as f:
               all_failures = json.load(f)
 
-          grouped = {}
+          # Group by test file
+          by_file = {}
 
           for job_name, suites in all_failures.items():
               for suite_name, entries in suites.items():
                   for entry in entries:
-                      name = f"{entry['test_name']} in {entry['test_file']}"
+                      test_file = entry["test_file"]
+                      test_name = entry["test_name"]
 
-                      if name not in grouped:
-                          grouped[name] = {
-                              "name": name,
-                              "test_name": entry["test_name"],
-                              "test_file": entry["test_file"],
+                      if test_file not in by_file:
+                          by_file[test_file] = {}
+
+                      if test_name not in by_file[test_file]:
+                          by_file[test_file][test_name] = {
+                              "test_name": test_name,
+                              "test_file": test_file,
                               "error": entry.get("error", ""),
                               "jobs": []
                           }
-                      grouped[name]["jobs"].append({
+
+                      by_file[test_file][test_name]["jobs"].append({
                           "job": job_name,
                           "suite": suite_name,
                           "url": job_urls.get(job_name, "")
                       })
-                      print(f"{name} in {job_name}/{suite_name}")
+                      print(f"{test_name} in {test_file} ({job_name}/{suite_name})")
 
-          unique_failures = list(grouped.values())
-          print(f"\nTotal unique failures: {len(unique_failures)}")
+          # Convert to list format
+          result = []
+          for test_file, tests in by_file.items():
+              result.append({
+                  "test_file": test_file,
+                  "tests": list(tests.values())
+              })
+
+          print(f"\nTotal files with failures: {len(result)}")
+          print(f"Total unique test failures: {sum(len(f['tests']) for f in result)}")
 
           with open("failures.json", "w") as f:
-              json.dump(unique_failures, f, indent=2)
+              json.dump(result, f, indent=2)
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"has_failures={'true' if unique_failures else 'false'}\n")
+              f.write(f"has_failures={'true' if result else 'false'}\n")
           EOF
 
-      # Step 4: Create or update issues
+      # Step 4: Create or update issues (one per test file, one comment per test case)
       - name: Create or update issues
         if: steps.merge.outputs.has_failures == 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require('fs');
-            const failures = JSON.parse(fs.readFileSync('failures.json', 'utf8'));
+            const fileFailures = JSON.parse(fs.readFileSync('failures.json', 'utf8'));
             const label = 'test-failure';
 
             // Ensure label exists
@@ -194,31 +207,37 @@ jobs:
 
             const today = new Date().toISOString().split('T')[0];
 
-            for (const failure of failures) {
-              const title = `[TEST-FAILURE] ${failure.test_name} in ${failure.test_file}`;
-              const envList = failure.jobs.map(j => j.job);
-              const ciLinks = failure.jobs.map(j => `- \`${j.job}\`: [CI link](${j.url})`).join('\n');
-              const envLine = `**Environments:** ${envList.map(e => '`' + e + '`').join(', ')}`;
+            for (const fileEntry of fileFailures) {
+              const testFile = fileEntry.test_file;
+              const tests = fileEntry.tests;
+              const title = `[TEST-FAILURE] ${testFile}`;
+
+              // Collect all environments across all tests in this file
+              const allEnvs = [...new Set(tests.flatMap(t => t.jobs.map(j => j.job)))];
+              const envLine = `**Environments:** ${allEnvs.map(e => '`' + e + '`').join(', ')}`;
+
+              // Build checklist of failing tests
+              const checklist = tests.map(t => `- [ ] ${t.test_name}`).join('\n');
 
               const existing = existingIssues.find(i => i.title === title);
 
               if (existing) {
-                console.log(`Found existing issue #${existing.number} for ${failure.name}`);
+                console.log(`Found existing issue #${existing.number} for ${testFile}`);
 
-                const envMatch = existing.body.match(/\*\*Environments:\*\*\s*(.+)/);
-                const envInner = envMatch ? envMatch[1].match(/`([^`]+)`/g) : null;
-                const existingEnvs = envInner
-                  ? envInner.map(e => e.replace(/`/g, ''))
-                  : [];
+                // Update checklist in issue body — add new test names
+                const bodyLines = existing.body.split('\n');
+                const existingTests = bodyLines
+                  .filter(l => l.match(/^- \[[ x]\] /))
+                  .map(l => l.replace(/^- \[[ x]\] /, ''));
 
-                const newEnvs = envList.filter(e => !existingEnvs.includes(e));
-
-                if (newEnvs.length > 0) {
-                  console.log(`  New environments: ${newEnvs.join(', ')}`);
-                  const allEnvs = [...existingEnvs, ...newEnvs];
-                  const newEnvLine = `**Environments:** ${allEnvs.map(e => '`' + e + '`').join(', ')}`;
-                  const updatedBody = existing.body.replace(/\*\*Environments:\*\*\s*.+/, newEnvLine);
-
+                const newTests = tests.map(t => t.test_name).filter(n => !existingTests.includes(n));
+                if (newTests.length > 0) {
+                  console.log(`  New failing tests: ${newTests.join(', ')}`);
+                  const newChecklistItems = newTests.map(n => `- [ ] ${n}`).join('\n');
+                  const updatedBody = existing.body.replace(
+                    /(---\n\*Auto-created)/,
+                    `${newChecklistItems}\n\n$1`
+                  );
                   await github.rest.issues.update({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
@@ -227,37 +246,99 @@ jobs:
                   });
                 }
 
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: existing.number,
-                  body: `Test failed again on ${today}.\n\n**Failed in:**\n${ciLinks}`,
-                });
+                // Update environments
+                const envMatch = existing.body.match(/\*\*Environments:\*\*\s*(.+)/);
+                const envInner = envMatch ? envMatch[1].match(/`([^`]+)`/g) : null;
+                const existingEnvs = envInner ? envInner.map(e => e.replace(/`/g, '')) : [];
+                const brandNewEnvs = allEnvs.filter(e => !existingEnvs.includes(e));
+                if (brandNewEnvs.length > 0) {
+                  const mergedEnvs = [...existingEnvs, ...brandNewEnvs];
+                  const newEnvLine = `**Environments:** ${mergedEnvs.map(e => '`' + e + '`').join(', ')}`;
+                  const currentBody = (await github.rest.issues.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: existing.number,
+                  })).data.body;
+                  const updatedBody = currentBody.replace(/\*\*Environments:\*\*\s*.+/, newEnvLine);
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: existing.number,
+                    body: updatedBody,
+                  });
+                }
+
+                // Get existing comments to find per-test comments
+                const comments = await github.paginate(
+                  github.rest.issues.listComments,
+                  {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: existing.number,
+                  },
+                  (response) => response.data
+                );
+
+                // For each failing test, create or update a comment
+                for (const test of tests) {
+                  const commentMarker = `<!-- test-failure: ${test.test_name} -->`;
+                  const ciLinks = test.jobs.map(j => `  - \`${j.job}\`: [CI link](${j.url})`).join('\n');
+                  const historyEntry = `- ${today}:\n${ciLinks}`;
+
+                  const existingComment = comments.find(c => c.body.includes(commentMarker));
+
+                  if (existingComment) {
+                    // Append to failure history
+                    const updatedComment = existingComment.body.replace(
+                      /(\n---\n\*Auto-tracked)/, 
+                      `\n${historyEntry}$1`
+                    );
+                    await github.rest.issues.updateComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      comment_id: existingComment.id,
+                      body: updatedComment,
+                    });
+                    console.log(`  Updated comment for test: ${test.test_name}`);
+                  } else {
+                    // Create new comment for this test
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: existing.number,
+                      body: [
+                        commentMarker,
+                        `**Test:** \`${test.test_name}\``,
+                        ``,
+                        `**Error:**`,
+                        '```',
+                        test.error || 'N/A',
+                        '```',
+                        ``,
+                        `**Failure history:**`,
+                        historyEntry,
+                        ``,
+                        `---`,
+                        `*Auto-tracked by Test Failure Detector*`,
+                      ].join('\n'),
+                    });
+                    console.log(`  Created comment for test: ${test.test_name}`);
+                  }
+                }
 
               } else {
-                console.log(`Creating issue for ${failure.name}`);
-                await github.rest.issues.create({
+                // Create new issue for this test file
+                console.log(`Creating issue for ${testFile}`);
+                const issue = await github.rest.issues.create({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   title: title,
                   labels: [label],
                   body: [
-                    `**Summary**`,
+                    `**Test file:** \`${testFile}\``,
                     ``,
-                    `\`${failure.test_name}\` in \`${failure.test_file}\` is failing in CI.`,
-                    ``,
-                    `**Failing test(s)**`,
-                    ``,
-                    `- Test name: \`${failure.test_name}\``,
-                    `- Test file: \`${failure.test_file}\``,
-                    `- CI link(s):`,
-                    ciLinks,
-                    ``,
-                    `**Error stack trace**`,
-                    ``,
-                    '```',
-                    failure.error || 'N/A',
-                    '```',
+                    `**Failing tests:**`,
+                    checklist,
                     ``,
                     envLine,
                     ``,
@@ -265,7 +346,36 @@ jobs:
                     `*Auto-created by Test Failure Detector*`,
                   ].join('\n'),
                 });
+
+                // Create one comment per failing test
+                for (const test of tests) {
+                  const commentMarker = `<!-- test-failure: ${test.test_name} -->`;
+                  const ciLinks = test.jobs.map(j => `  - \`${j.job}\`: [CI link](${j.url})`).join('\n');
+
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.data.number,
+                    body: [
+                      commentMarker,
+                      `**Test:** \`${test.test_name}\``,
+                      ``,
+                      `**Error:**`,
+                      '```',
+                      test.error || 'N/A',
+                      '```',
+                      ``,
+                      `**Failure history:**`,
+                      `- ${today}:`,
+                      ciLinks,
+                      ``,
+                      `---`,
+                      `*Auto-tracked by Test Failure Detector*`,
+                    ].join('\n'),
+                  });
+                  console.log(`  Created comment for test: ${test.test_name}`);
+                }
               }
             }
 
-            console.log(`Done. Processed ${failures.length} failure(s).`);
+            console.log(`Done. Processed ${fileFailures.length} file(s).`);
