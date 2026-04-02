@@ -186,6 +186,9 @@ module.exports = async ({github, context}) => {
         ].join('\n'),
       });
 
+      // Small delay to allow GitHub to fully process the new issue
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       // Create one comment per failing test
       for (const test of tests) {
         const commentMarker = `<!-- test-failure: ${test.test_name} -->`;
