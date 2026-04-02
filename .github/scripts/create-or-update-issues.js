@@ -84,7 +84,7 @@ module.exports = async ({github, context}) => {
       // For each failing test, create or update a comment
       for (const test of tests) {
         const commentMarker = `<!-- test-failure: ${test.test_name} -->`;
-        const ciLinks = test.jobs.map(j => `  - \`${j.job}\`: [CI link](${j.url})`).join('\n');
+        const ciLinks = test.jobs.map(j => `- \`${j.job}\`: [CI link](${j.url})`).join('\n');
         const envNames = test.jobs.map(j => j.job);
 
         const existingComment = comments.find(c => c.body.includes(commentMarker));
@@ -103,7 +103,7 @@ module.exports = async ({github, context}) => {
           const firstSeenMatch = existingComment.body.match(/\*\*First seen:\*\*\s*(.+)/);
           const firstSeen = firstSeenMatch ? firstSeenMatch[1].trim() : today;
 
-          const firstCIMatch = existingComment.body.match(/\*\*First CI:\*\*\n([\s\S]*?)\n\*\*Last seen:/);
+          const firstCIMatch = existingComment.body.match(/\*\*First CI:\*\*\n([\s\S]*?)\n\n\*\*Last seen:/);
           const firstCI = firstCIMatch ? firstCIMatch[1].trim() : ciLinks;
 
           const updatedComment = [
@@ -116,11 +116,14 @@ module.exports = async ({github, context}) => {
             '```',
             ``,
             `**First seen:** ${firstSeen}`,
+            ``,
             `**First CI:**`,
             firstCI,
+            ``,
             `**Last seen:** ${today}`,
             `**Occurrences:** ${occurrences}`,
             `**Affected environments:** ${allEnvs.map(e => '`' + e + '`').join(', ')}`,
+            ``,
             `**Latest CI:**`,
             ciLinks,
             ``,
@@ -151,11 +154,14 @@ module.exports = async ({github, context}) => {
               '```',
               ``,
               `**First seen:** ${today}`,
+              ``,
               `**First CI:**`,
               ciLinks,
+              ``,
               `**Last seen:** ${today}`,
               `**Occurrences:** 1`,
               `**Affected environments:** ${envNames.map(e => '`' + e + '`').join(', ')}`,
+              ``,
               `**Latest CI:**`,
               ciLinks,
               ``,
@@ -192,7 +198,7 @@ module.exports = async ({github, context}) => {
       // Create one comment per failing test
       for (const test of tests) {
         const commentMarker = `<!-- test-failure: ${test.test_name} -->`;
-        const ciLinks = test.jobs.map(j => `  - \`${j.job}\`: [CI link](${j.url})`).join('\n');
+        const ciLinks = test.jobs.map(j => `- \`${j.job}\`: [CI link](${j.url})`).join('\n');
         const envNames = test.jobs.map(j => j.job);
 
         await github.rest.issues.createComment({
@@ -209,11 +215,14 @@ module.exports = async ({github, context}) => {
             '```',
             ``,
             `**First seen:** ${today}`,
+            ``,
             `**First CI:**`,
             ciLinks,
+            ``,
             `**Last seen:** ${today}`,
             `**Occurrences:** 1`,
             `**Affected environments:** ${envNames.map(e => '`' + e + '`').join(', ')}`,
+            ``,
             `**Latest CI:**`,
             ciLinks,
             ``,
