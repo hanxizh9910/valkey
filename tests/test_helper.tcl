@@ -621,6 +621,8 @@ proc write_test_failures {} {
         if {[string match {*\[*TIMEOUT*\]*} $failed]} continue
         if {[string match {*Sanitizer error*} $failed]} continue
         if {[string match {*Valgrind error*} $failed]} continue
+        if {[string match {*Can't start*} $failed]} continue
+        if {[string match {*Check for memory leaks*} $failed]} continue
 
         set status "err"
         set test_name ""
