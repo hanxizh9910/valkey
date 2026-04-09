@@ -135,11 +135,13 @@ jobs:
                               "error": entry.get("error", ""),
                               "jobs": []
                           }
-                      grouped[name]["jobs"].append({
-                          "job": job_name,
-                          "suite": suite_name,
-                          "url": job_urls.get(job_name, "")
-                      })
+                      # Deduplicate: skip if this job already recorded for this test
+                      if job_name not in [j["job"] for j in grouped[name]["jobs"]]:
+                          grouped[name]["jobs"].append({
+                              "job": job_name,
+                              "suite": suite_name,
+                              "url": job_urls.get(job_name, "")
+                          })
                       print(f"{name} in {job_name}/{suite_name}")
 
           unique_failures = list(grouped.values())
