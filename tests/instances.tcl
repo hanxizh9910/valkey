@@ -495,7 +495,14 @@ while 1 {
             continue
         }
         if {[file isdirectory $test]} continue
-        set ::cur_test_file $test
+        # Convert relative path (../tests/...) to project-relative path (tests/<suite>/tests/...)
+        set normalized [file normalize $test]
+        set project_root [file normalize "../../.."]
+        if {[string match "${project_root}/*" $normalized]} {
+            set ::cur_test_file [string range $normalized [expr {[string length $project_root] + 1}] end]
+        } else {
+            set ::cur_test_file $test
+        }
         puts [colorstr yellow "Testing unit: [lindex [file split $test] end]"]
         if {[catch { source $test } err]} {
             puts "FAILED: caught an error in the test $err"
