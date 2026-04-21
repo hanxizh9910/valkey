@@ -49,7 +49,7 @@ test "SENTINEL INFO CACHE returns the cached info" {
     assert_equal "mymaster" [lindex $res 0]
 
     set res [lindex $res 1]
-    assert_morethan_equal [llength $res] 2
+    assert_morethan_equal [llength $res] 20
     assert_morethan [lindex $res 0] 0
     assert_match "*# Server*" [lindex $res 1]
 }

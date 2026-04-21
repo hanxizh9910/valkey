@@ -23,7 +23,7 @@ start_server {tags {"modules acl"}} {
         # give permission for SET and block all keys but x(READ+WRITE), y(WRITE), z(READ)
         r acl setuser default +set resetkeys ~x %W~y %R~z
 
-        assert_equal [r aclcheck.set.check.key "*" x 5] OK
+        assert_equal [r aclcheck.set.check.key "*" x 5] OKk
         catch {r aclcheck.set.check.key "*" v 5} e
         assert_match "*DENIED KEY*" $e
 
