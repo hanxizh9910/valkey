@@ -40,6 +40,10 @@ set ::exit_on_failure 0
 set ::stop_on_failure 0
 set ::loop 0
 
+# Save project root before cd'ing into tmp.
+# At this point we're in tests/<suite>/ (e.g., tests/sentinel/).
+set ::project_root [file normalize "../.."]
+
 if {[catch {cd tmp}]} {
     puts "tmp directory not found."
     puts "Please run this test from the Valkey source root."
@@ -315,7 +319,7 @@ proc parse_options {} {
         } elseif {$opt eq {--loop}} {
             set ::loop 1
         } elseif {$opt eq {--failures-output}} {
-            set ::failures_output_file [file normalize "../../../$val"]
+            set ::failures_output_file [file normalize [file join $::project_root $val]]
             incr j
         } elseif {$opt eq {--log-req-res}} {
             set ::log_req_res 1
