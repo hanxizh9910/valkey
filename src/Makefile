@@ -734,10 +734,10 @@ $(TLS_MODULE_NAME): $(SERVER_NAME)
 $(RDMA_MODULE_NAME): $(SERVER_NAME)
 	$(QUIET_CC)$(CC) $(LDFLAGS) -o $@ rdma.c -shared -fPIC $(RDMA_MODULE_CFLAGS)
 
-# Strip -flto from OPTIMIZATION for the static Lua module build.
+# Strip LTO flags from OPTIMIZATION for the static Lua module build.
 # When archiving into a .a, LTO bitcode objects cause linker failures
 # if the system's LLVM gold plugin version doesn't match clang's version.
-LUA_MODULE_OPTIMIZATION=$(subst -flto,,$(OPTIMIZATION))
+LUA_MODULE_OPTIMIZATION=$(subst -flto,,$(subst -ffat-lto-objects,,$(subst -flto=auto,,$(OPTIMIZATION))))
 
 # engine_lua.so
 $(LUA_MODULE_NAME): .make-prerequisites
