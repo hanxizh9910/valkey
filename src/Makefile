@@ -24,6 +24,8 @@ OPTIMIZATION?=-O3
 ifeq ($(OPTIMIZATION),-O3)
 	ifeq (clang,$(CLANG))
 		OPTIMIZATION+=-flto
+		# Use llvm-ar for LTO bitcode compatibility when archiving with clang.
+		AR=llvm-ar
 	else
 		OPTIMIZATION+=-flto=auto -ffat-lto-objects
 	endif
