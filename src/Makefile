@@ -24,8 +24,6 @@ OPTIMIZATION?=-O3
 ifeq ($(OPTIMIZATION),-O3)
 	ifeq (clang,$(CLANG))
 		OPTIMIZATION+=-flto
-		# Use llvm-ar for LTO bitcode compatibility when archiving with clang.
-		AR=llvm-ar
 	else
 		OPTIMIZATION+=-flto=auto -ffat-lto-objects
 	endif
@@ -142,6 +140,12 @@ FINAL_CFLAGS=$(STD) $(WARN) $(OPT) $(DEBUG) $(CFLAGS) $(SERVER_CFLAGS)
 FINAL_LDFLAGS=$(LDFLAGS) $(OPT) $(SERVER_LDFLAGS) $(DEBUG)
 FINAL_LIBS=-lm
 DEBUG=-g -ggdb
+
+# Use lld when linking with clang to avoid LLVM version mismatches
+# between clang and the system's gold plugin during LTO.
+ifeq (clang,$(CLANG))
+	FINAL_LDFLAGS+=-fuse-ld=lld
+endif
 
 # Linux ARM32 needs -latomic at linking time
 ifneq (,$(findstring armv,$(uname_M)))

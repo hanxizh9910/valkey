@@ -32,6 +32,8 @@ QUIET_LINK_MOD = @printf '    %b %b\n' $(LINKCOLOR_MOD)LINK$(RESET) $(BINCOLOR_M
 endif
 ifeq (clang,$(CLANG))
 	SHOBJ_LDFLAGS+= -fuse-ld=lld
+	# Use llvm-ar for LTO bitcode compatibility when archiving with clang.
+	AR=llvm-ar
 endif
 
 endif
