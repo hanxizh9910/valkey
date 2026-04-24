@@ -11,8 +11,9 @@ else
 	LUA_TARGET=libvalkeylua.a
 	# Strip LTO flags for the static build. When archiving into a .a,
 	# LTO bitcode objects cause linker failures if the system linker
-	# cannot read them.
-	OPTIMIZATION:=$(subst -flto,,$(subst -ffat-lto-objects,,$(subst -flto=auto,,$(OPTIMIZATION))))
+	# cannot read them. Use 'override' because OPTIMIZATION is passed
+	# as a command-line variable from the parent Makefile.
+	override OPTIMIZATION:=$(subst -flto,,$(subst -ffat-lto-objects,,$(subst -flto=auto,,$(OPTIMIZATION))))
 endif
 
 ifeq ($(uname_S),Darwin)
