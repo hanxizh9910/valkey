@@ -50,7 +50,9 @@
 #include "valkey_strtod.h"
 
 #ifdef HAVE_BACKTRACE
+#ifdef HAVE_EXECINFO
 #include <execinfo.h>
+#endif
 #ifndef __OpenBSD__
 #include <ucontext.h>
 #else
@@ -1716,6 +1718,40 @@ static void setupStacktracePipe(void) { /* we don't need a pipe to write the sta
 #ifdef HAVE_BACKTRACE
 #define BACKTRACE_MAX_SIZE 100
 
+#if defined(USE_LIBBACKTRACE) && !defined(HAVE_EXECINFO)
+/* On systems without execinfo.h (e.g. musl/Alpine), use libbacktrace's
+ * backtrace_simple() to collect stack frame addresses. */
+struct bt_collect_data {
+    void **trace;
+    int max_size;
+    int count;
+};
+
+static int bt_simple_collect_cb(void *data, uintptr_t pc) {
+    struct bt_collect_data *d = (struct bt_collect_data *)data;
+    if (d->count < d->max_size) {
+        d->trace[d->count++] = (void *)pc;
+    }
+    return 0;
+}
+
+static void bt_simple_error_cb(void *data, const char *msg, int errnum) {
+    (void)data;
+    (void)msg;
+    (void)errnum;
+}
+
+static int valkey_backtrace(void **trace, int max_size) {
+    struct backtrace_state *state = backtrace_create_state(NULL, 0, bt_simple_error_cb, NULL);
+    if (!state) return 0;
+    struct bt_collect_data data = {trace, max_size, 0};
+    backtrace_simple(state, 0, bt_simple_collect_cb, bt_simple_error_cb, &data);
+    return data.count;
+}
+
+#define backtrace(trace, size) valkey_backtrace(trace, size)
+#endif /* USE_LIBBACKTRACE && !HAVE_EXECINFO */
+
 #ifdef USE_LIBBACKTRACE
 /* Callback data for libbacktrace */
 typedef struct {
@@ -1779,11 +1815,19 @@ static void symbolizeWithLibbacktrace(void **trace, int trace_size, int fd, int 
                 char *msg = "\n(libbacktrace failed to resolve symbols, falling back to standard backtrace)\n";
                 if (write(fd, msg, strlen(msg)) == -1) { /* Avoid warning. */
                 }
+#ifdef HAVE_EXECINFO
                 backtrace_symbols_fd(trace + uplevel, trace_size - uplevel, fd);
+#endif
             }
         } else {
             /* Fallback if state creation fails */
+#ifdef HAVE_EXECINFO
             backtrace_symbols_fd(trace + uplevel, trace_size - uplevel, fd);
+#else
+            char *msg = "(libbacktrace state creation failed, no fallback available)\n";
+            if (write(fd, msg, strlen(msg)) == -1) { /* Avoid warning. */
+            }
+#endif
         }
         _exit(0);
     } else if (pid > 0) {
@@ -1805,7 +1849,13 @@ static void symbolizeWithLibbacktrace(void **trace, int trace_size, int fd, int 
         }
     } else {
         /* Fork failed, fall back to backtrace_symbols_fd */
+#ifdef HAVE_EXECINFO
         backtrace_symbols_fd(trace + uplevel, trace_size - uplevel, fd);
+#else
+        char *msg = "(fork failed, no fallback available)\n";
+        if (write(fd, msg, strlen(msg)) == -1) { /* Avoid warning. */
+        }
+#endif
     }
 }
 #endif /* USE_LIBBACKTRACE */
@@ -1947,7 +1997,11 @@ __attribute__((noinline)) void logStackTrace(void *eip, int uplevel, int current
         msg = "EIP:\n";
         if (write(fd, msg, strlen(msg)) == -1) { /* Avoid warning. */
         };
+#ifdef USE_LIBBACKTRACE
+        symbolizeWithLibbacktrace(&eip, 1, fd, 0);
+#elif defined(HAVE_EXECINFO)
         backtrace_symbols_fd(&eip, 1, fd);
+#endif
     }
 
     /* Write symbols to log file */
