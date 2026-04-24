@@ -9,6 +9,10 @@ ifeq ($(BUILD_LUA),module)
 else
 	STATIC_LUA_FLAG=-DSTATIC_LUA=1
 	LUA_TARGET=libvalkeylua.a
+	# Strip LTO flags for the static build. When archiving into a .a,
+	# LTO bitcode objects cause linker failures if the system linker
+	# cannot read them.
+	OPTIMIZATION:=$(subst -flto,,$(subst -ffat-lto-objects,,$(subst -flto=auto,,$(OPTIMIZATION))))
 endif
 
 ifeq ($(uname_S),Darwin)
