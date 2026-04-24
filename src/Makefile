@@ -736,7 +736,7 @@ $(RDMA_MODULE_NAME): $(SERVER_NAME)
 
 # engine_lua.so
 $(LUA_MODULE_NAME): .make-prerequisites
-	$(MAKE) -C modules/lua OPTIMIZATION="$(OPTIMIZATION)" BUILD_LUA="$(BUILD_LUA)"
+	$(MAKE) -C modules/lua OPTIMIZATION="$(LUA_MODULE_OPTIMIZATION)" BUILD_LUA="$(BUILD_LUA)"
 
 # valkey-cli
 $(ENGINE_CLI_NAME): $(ENGINE_CLI_OBJ)
