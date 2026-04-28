@@ -1834,11 +1834,15 @@ static void symbolizeWithLibbacktrace(void **trace, int trace_size, int fd, int 
             }
             /* If libbacktrace produced no frames or no useful function names, fall back to standard backtrace */
             if (cb_data.count == 0 || !cb_data.found_symbols) {
+#ifdef HAVE_EXECINFO
                 char *msg = "\n(libbacktrace failed to resolve symbols, falling back to standard backtrace)\n";
                 if (write(fd, msg, strlen(msg)) == -1) { /* Avoid warning. */
                 }
-#ifdef HAVE_EXECINFO
                 backtrace_symbols_fd(trace + uplevel, trace_size - uplevel, fd);
+#else
+                char *msg = "\n(no symbol information available for these frames)\n";
+                if (write(fd, msg, strlen(msg)) == -1) { /* Avoid warning. */
+                }
 #endif
             }
         } else {
