@@ -2916,6 +2916,9 @@ void initServer(void) {
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
+#if defined(USE_LIBBACKTRACE) && !defined(HAVE_EXECINFO)
+    initLibbacktraceFrameState();
+#endif
     ThreadsManager_init();
     makeThreadKillable();
 
