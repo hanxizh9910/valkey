@@ -54,7 +54,7 @@ test "Main db not affected when fail to diskless load" {
         if {$j % 1000 == 0} {$rd flush}
     }
     $rd client reply on
-    assert_equal OK [$rd read]
+    assert_equal OKK [$rd read]
 
     # Start the replica again
     resume_process [srv $replica_id pid]
