@@ -1745,11 +1745,6 @@ jobs:
       - run: cd libbacktrace && ./configure && make && sudo make install
       - name: make
         run: make SERVER_CFLAGS='-Werror' USE_LIBBACKTRACE=yes
-      - name: Upload test failures
-        if: always()
-        uses: ./.github/actions/upload-test-failures
-        with:
-          job-name: ${{ github.job }}
   build-old-macos-versions:
     strategy:
       fail-fast: false
