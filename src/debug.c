@@ -1741,11 +1741,16 @@ static void bt_simple_error_cb(void *data, const char *msg, int errnum) {
     (void)errnum;
 }
 
+static struct backtrace_state *bt_frame_state = NULL;
+
+void initLibbacktraceFrameState(void) {
+    bt_frame_state = backtrace_create_state(NULL, 0, bt_simple_error_cb, NULL);
+}
+
 static int valkey_backtrace(void **trace, int max_size) {
-    struct backtrace_state *state = backtrace_create_state(NULL, 0, bt_simple_error_cb, NULL);
-    if (!state) return 0;
+    if (!bt_frame_state) return 0;
     struct bt_collect_data data = {trace, max_size, 0};
-    backtrace_simple(state, 0, bt_simple_collect_cb, bt_simple_error_cb, &data);
+    backtrace_simple(bt_frame_state, 0, bt_simple_collect_cb, bt_simple_error_cb, &data);
     return data.count;
 }
 
