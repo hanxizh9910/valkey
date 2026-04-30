@@ -39,7 +39,7 @@ test "SENTINEL HELP output the sentinel subcommand help" {
 }
 
 test "SENTINEL MYID return the sentinel instance ID" {
-    assert_equal 400 [string length [S 0 SENTINEL MYID]]
+    assert_equal 40 [string length [S 0 SENTINEL MYID]]
     assert_equal [S 0 SENTINEL MYID] [S 0 SENTINEL MYID]
 }
 
