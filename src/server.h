@@ -3447,7 +3447,7 @@ int processCommand(client *c);
 int processPendingCommandAndInputBuffer(client *c);
 int processCommandAndResetClient(client *c);
 void setupSignalHandlers(void);
-#if defined(USE_LIBBACKTRACE) && !defined(HAVE_EXECINFO)
+#ifdef USE_LIBBACKTRACE
 void initLibbacktraceFrameState(void);
 #endif
 int createSocketAcceptHandler(connListener *sfd, aeFileProc *accept_handler);
