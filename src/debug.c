@@ -1718,7 +1718,7 @@ static void setupStacktracePipe(void) { /* we don't need a pipe to write the sta
 #ifdef HAVE_BACKTRACE
 #define BACKTRACE_MAX_SIZE 100
 
-#if defined(USE_LIBBACKTRACE) && !defined(HAVE_EXECINFO)
+#ifdef USE_LIBBACKTRACE
 /* On systems without execinfo.h (e.g. musl/Alpine), use libbacktrace's
  * backtrace_simple() to collect stack frame addresses. */
 struct bt_collect_data {
@@ -1755,7 +1755,7 @@ static int valkey_backtrace(void **trace, int max_size) {
 }
 
 #define backtrace(trace, size) valkey_backtrace(trace, size)
-#endif /* USE_LIBBACKTRACE && !HAVE_EXECINFO */
+#endif /* USE_LIBBACKTRACE */
 
 #ifdef USE_LIBBACKTRACE
 /* Callback data for libbacktrace */

@@ -2912,7 +2912,7 @@ void initServer(void) {
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
-#if defined(USE_LIBBACKTRACE) && !defined(HAVE_EXECINFO)
+#ifdef USE_LIBBACKTRACE
     initLibbacktraceFrameState();
 #endif
     ThreadsManager_init();
