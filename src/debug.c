@@ -1765,6 +1765,8 @@ static void bt_simple_error_cb(void *data, const char *msg, int errnum) {
 
 static struct backtrace_state *bt_frame_state = NULL;
 
+/* Preallocate at startup: backtrace_create_state() calls malloc, which is not
+ * async-signal-safe and could deadlock if called from a crash signal handler. */
 void initLibbacktraceFrameState(void) {
     bt_frame_state = backtrace_create_state(NULL, 0, bt_simple_error_cb, NULL);
 }
