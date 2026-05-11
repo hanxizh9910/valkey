@@ -1223,7 +1223,15 @@ proc system_backtrace_supported {} {
         return 0
     }
 
-    # libmusl does not support backtrace. Also return 0 on
+    # Check if built with USE_LIBBACKTRACE (for musl/Alpine)
+    catch {
+        set buildinfo [exec grep -a "USE_LIBBACKTRACE" $::VALKEY_SERVER_BIN]
+        if {$buildinfo ne ""} {
+            return 1
+        }
+    }
+
+    # libmusl does not support backtrace natively. Also return 0 on
     # static binaries (ldd exit code 1) where we can't detect libmusl
     catch {
         set ldd [exec ldd $::VALKEY_SERVER_BIN]
