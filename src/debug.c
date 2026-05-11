@@ -1746,7 +1746,7 @@ static struct backtrace_state *bt_frame_state = NULL;
 /* Preallocate at startup: backtrace_create_state() calls malloc, which is not
  * async-signal-safe and could deadlock if called from a crash signal handler. */
 void initLibbacktraceFrameState(void) {
-    bt_frame_state = backtrace_create_state(NULL, 0, bt_simple_error_cb, NULL);
+    bt_frame_state = backtrace_create_state(NULL, 1, bt_simple_error_cb, NULL);
 }
 
 static int valkey_backtrace(void **trace, int max_size) {
