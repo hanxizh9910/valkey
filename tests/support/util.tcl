@@ -1227,10 +1227,13 @@ proc system_backtrace_supported {} {
     catch {
         set buildinfo [exec grep -a "USE_LIBBACKTRACE" $::VALKEY_SERVER_BIN]
         if {$buildinfo ne ""} {
-            puts "DEBUG: Found USE_LIBBACKTRACE in binary, backtrace supported on musl"
+            puts stderr "=== DEBUG: Found USE_LIBBACKTRACE in binary, backtrace supported on musl ==="
+            flush stderr
             return 1
         }
     }
+    puts stderr "=== DEBUG: USE_LIBBACKTRACE not found, checking musl ==="
+    flush stderr
 
     # libmusl does not support backtrace natively. Also return 0 on
     # static binaries (ldd exit code 1) where we can't detect libmusl
