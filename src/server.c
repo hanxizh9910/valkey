@@ -2911,10 +2911,10 @@ serverDb *createDatabaseIfNeeded(int id) {
 void initServer(void) {
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
-    setupSignalHandlers();
 #ifdef USE_LIBBACKTRACE
     initLibbacktraceFrameState();
 #endif
+    setupSignalHandlers();
     ThreadsManager_init();
     makeThreadKillable();
 
