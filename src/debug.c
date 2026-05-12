@@ -1762,7 +1762,6 @@ static void bt_simple_error_cb(void *data, const char *msg, int errnum) {
     (void)msg;
     (void)errnum;
 }
-}
 
 static struct backtrace_state *bt_frame_state = NULL;
 
