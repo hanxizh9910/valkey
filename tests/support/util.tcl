@@ -1227,7 +1227,7 @@ proc system_backtrace_supported {} {
     catch {
         set buildinfo [exec grep -a "USE_LIBBACKTRACE" $::VALKEY_SERVER_BIN]
         if {$buildinfo ne ""} {
-            return 1
+            error "DEBUG: Found USE_LIBBACKTRACE in binary - intentionally failing to prove this code path is executed"
         }
     }
 
