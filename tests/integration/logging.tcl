@@ -37,9 +37,12 @@ proc check_log_backtrace_for_debug {log_pattern} {
         }
     }
 
-    set pattern "*debugCommand*"
-    set res [wait_for_log_messages 0 \"$pattern\" 0 100 100]
-    if {$::verbose} { puts $res}
+    # Check for debugCommand only if symbols are resolved (not on Alpine/musl)
+    if {[count_log_message 0 "(no symbol information available"] == 0} {
+        set pattern "*debugCommand*"
+        set res [wait_for_log_messages 0 \"$pattern\" 0 100 100]
+        if {$::verbose} { puts $res}
+    }
 }
 
 # used when backtrace_supported == 0
