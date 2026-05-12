@@ -1759,8 +1759,9 @@ static int bt_simple_collect_cb(void *data, uintptr_t pc) {
 
 static void bt_simple_error_cb(void *data, const char *msg, int errnum) {
     (void)data;
-    (void)msg;
-    (void)errnum;
+    if (msg) {
+        serverLog(LL_WARNING, "libbacktrace error: %s (errno=%d)", msg, errnum);
+    }
 }
 
 static struct backtrace_state *bt_frame_state = NULL;
