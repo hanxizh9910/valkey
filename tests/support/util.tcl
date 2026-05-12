@@ -1227,6 +1227,7 @@ proc system_backtrace_supported {} {
     catch {
         set buildinfo [exec grep -a "USE_LIBBACKTRACE" $::VALKEY_SERVER_BIN]
         if {$buildinfo ne ""} {
+            puts "DEBUG: Found USE_LIBBACKTRACE in binary, backtrace supported on musl"
             return 1
         }
     }
