@@ -30,8 +30,10 @@ proc check_log_backtrace_for_debug {log_pattern} {
         # the following are skipped since valgrind is slow and a timeout can happen
         if {!$::valgrind} {
             assert_equal [count_log_message 0 "wait_threads(): waiting threads timed out"] 0
-            # make sure the server prints stack trace for all threads. we know 3 threads are idle in bio.c
-            assert_equal [count_log_message 0 "bioProcessBackgroundJobs"] 3
+            # make sure the server prints stack trace for all threads. we know 5 threads are idle in bio.c
+            # Search for thread names (bio_*) which appear on all systems, including Alpine where
+            # function names may not be resolved
+            assert_equal [count_log_message 0 "bio_"] 5
         }
     }
 
