@@ -1224,9 +1224,9 @@ proc system_backtrace_supported {} {
     }
 
     # Check if built with USE_LIBBACKTRACE (for musl/Alpine)
-    set buildinfo [exec grep -a "USE_LIBBACKTRACE" $::VALKEY_SERVER_BIN]
-    if {$buildinfo ne ""} {
-        error "DEBUG: Found USE_LIBBACKTRACE in binary - intentionally failing to prove this code path is executed"
+    # Look for libbacktrace symbols instead of the macro string
+    if {[catch {exec grep -a "initLibbacktraceFrameState" $::VALKEY_SERVER_BIN} buildinfo] == 0} {
+        error "PROOF: Found initLibbacktraceFrameState symbol - this code path IS being executed on [exec uname -s]"
     }
 
     # libmusl does not support backtrace natively. Also return 0 on
