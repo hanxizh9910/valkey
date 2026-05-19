@@ -35,6 +35,7 @@ set ::dirs {} ; # We remove all the temp dirs at exit
 set ::run_matching {} ; # If non empty, only tests matching pattern are run.
 set ::stop_on_failure 0
 set ::loop 0
+set ::failures_output_file ""; # If set, write failures JSON to this path
 
 if {[catch {cd tmp}]} {
     puts "tmp directory not found."
@@ -304,6 +305,9 @@ proc parse_options {} {
             set ::log_req_res 1
         } elseif {$opt eq {--force-resp3}} {
             set ::force_resp3 1
+        } elseif {$opt eq {--failures-output}} {
+            incr j
+            set ::failures_output_file $val
         } elseif {$opt eq "--help"} {
             puts "--single <pattern>      Only runs tests specified by pattern."
             puts "--dont-clean            Keep log files on exit."
@@ -316,6 +320,7 @@ proc parse_options {} {
             puts "--config <k> <v>        Extra config argument(s)."
             puts "--stop                  Blocks once the first test fails."
             puts "--loop                  Execute the specified set of tests forever."
+            puts "--failures-output <path> Write test failures to the specified JSON file."
             puts "--help                  Shows this help."
             exit 0
         } else {
@@ -504,6 +509,21 @@ while 1 {
 
 # Print a message and exists with 0 / 1 according to zero or more failures.
 proc end_tests {} {
+    # Write failures output file if requested
+    if {$::failures_output_file ne ""} {
+        set outdir [file dirname $::failures_output_file]
+        if {$outdir ne "." && $outdir ne ""} {
+            file mkdir $outdir
+        }
+        set fp [open $::failures_output_file w]
+        if {$::failed > 0} {
+            puts $fp "\[\{\"test_name\":\"sentinel/cluster tests\",\"test_file\":\"unknown\",\"status\":\"err\",\"error\":\"$::failed test(s) failed\"\}\]"
+        } else {
+            puts $fp "\[\]"
+        }
+        close $fp
+    }
+
     if {$::failed == 0 } {
         puts [colorstr green "GOOD! No errors."]
         exit 0
