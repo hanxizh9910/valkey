@@ -524,6 +524,7 @@ int dbGenericDelete(serverDb *db, robj *key, int async, int flags) {
 
 /* Add a key with volatile items to the tracking kvstore. */
 void dbTrackKeyWithVolatileItems(serverDb *db, robj *o) {
+    serverAssert(objectGetKey(o));
     if (o->type == OBJ_HASH && hashTypeHasVolatileFields(o)) {
         int dict_index = getKVStoreIndexForKey(objectGetKey(o));
         kvstoreHashtableAdd(db->keys_with_volatile_items, dict_index, o);
@@ -532,6 +533,7 @@ void dbTrackKeyWithVolatileItems(serverDb *db, robj *o) {
 
 /* Delete a key from the keys with volatile entries tracking kvstore */
 void dbUntrackKeyWithVolatileItems(serverDb *db, robj *o) {
+    serverAssert(objectGetKey(o));
     int dict_index = getKVStoreIndexForKey(objectGetKey(o));
     kvstoreHashtableDelete(db->keys_with_volatile_items, dict_index, objectGetKey(o));
 }
@@ -686,8 +688,7 @@ long long emptyData(int dbnum, int flags, void(callback)(hashtable *)) {
 
     if (with_functions) {
         serverAssert(dbnum == -1);
-        /* TODO: fix this callback incompatibility. The arg is not used. */
-        functionReset(async, (void (*)(dict *))callback);
+        functionReset(async);
     }
 
     /* Also fire the end event. Note that this event will fire almost
@@ -821,7 +822,7 @@ void flushAllDataAndResetRDB(int flags) {
     /* jemalloc 5 doesn't release pages back to the OS when there's no traffic.
      * for large databases, flushdb blocks for long anyway, so a bit more won't
      * harm and this way the flush and purge will be synchronous. */
-    if (!(flags & EMPTYDB_ASYNC)) jemalloc_purge();
+    if (!(flags & EMPTYDB_ASYNC)) zmalloc_purge();
 #endif
 }
 
@@ -846,7 +847,7 @@ void flushdbCommand(client *c) {
     /* jemalloc 5 doesn't release pages back to the OS when there's no traffic.
      * for large databases, flushdb blocks for long anyway, so a bit more won't
      * harm and this way the flush and purge will be synchronous. */
-    if (!(flags & EMPTYDB_ASYNC)) jemalloc_purge();
+    if (!(flags & EMPTYDB_ASYNC)) zmalloc_purge();
 #endif
 }
 
@@ -1541,6 +1542,23 @@ void moveCommand(client *c) {
     int srcid, dbid;
     long long expire;
 
+    /* Parse optional REPLACE token (MOVE key db [REPLACE]).
+     * Without REPLACE, MOVE returns 0 if the key already exists in the target DB.
+     * With REPLACE, the destination key is overwritten by the moved key. */
+    int set_key_flags = SETKEY_DOESNT_EXIST;
+    if (c->argc > 4) {
+        addReplyErrorObject(c, shared.syntaxerr);
+        return;
+    } else if (c->argc == 4) {
+        if (!strcasecmp(objectGetVal(c->argv[3]), "replace")) {
+            set_key_flags = SETKEY_ADD_OR_UPDATE;
+        } else {
+            addReplyErrorObject(c, shared.syntaxerr);
+            return;
+        }
+    }
+    set_key_flags |= SETKEY_NO_SIGNAL;
+
     /* Obtain source and target DB pointers */
     src = c->db;
     srcid = c->db->id;
@@ -1569,8 +1587,8 @@ void moveCommand(client *c) {
     }
     expire = objectGetExpire(o);
 
-    /* Return zero if the key already exists in the target DB */
-    if (lookupKeyWrite(dst, c->argv[1]) != NULL) {
+    /* Without REPLACE, return zero if the key already exists in the target DB. */
+    if (lookupKeyWrite(dst, c->argv[1]) != NULL && (set_key_flags & SETKEY_DOESNT_EXIST)) {
         addReply(c, shared.czero);
         return;
     }
@@ -1578,7 +1596,7 @@ void moveCommand(client *c) {
     incrRefCount(o);           /* ref counter = 2 */
     dbDelete(src, c->argv[1]); /* ref counter = 1 */
 
-    dbAdd(dst, c->argv[1], &o);
+    setKey(c, dst, c->argv[1], &o, set_key_flags);
     if (expire != -1) o = setExpire(c, dst, c->argv[1], expire);
 
     /* OK! key moved */
@@ -3012,6 +3030,8 @@ int bitfieldGetKeys(struct serverCommand *cmd, robj **argv, int argc, getKeysRes
     return 1;
 }
 
+/* See commandDbIdArgs in server.h. Returns argv[1] (the dbid).
+ * Caller should free the returned array. */
 int *selectDbIdArgs(robj **argv, int argc, int *count) {
     if (argc < 2) return NULL;
 
@@ -3019,12 +3039,14 @@ int *selectDbIdArgs(robj **argv, int argc, int *count) {
     if (getLongLongFromObject(argv[1], &dbid) != C_OK) return NULL;
     if (dbid < 0 || dbid >= server.dbnum) return NULL;
 
-    int *result = zmalloc(sizeof(int));
-    result[0] = (int)dbid;
+    int *positions = zmalloc(sizeof(int));
+    positions[0] = 1;
     *count = 1;
-    return result;
+    return positions;
 }
 
+/* See commandDbIdArgs in server.h. Returns argv[1] and argv[2] (the two dbids).
+ * Caller should free the returned array. */
 int *swapdbDbIdArgs(robj **argv, int argc, int *count) {
     if (argc < 3) return NULL;
 
@@ -3033,13 +3055,15 @@ int *swapdbDbIdArgs(robj **argv, int argc, int *count) {
         getLongLongFromObject(argv[2], &db2) != C_OK) return NULL;
     if (db1 < 0 || db1 >= server.dbnum || db2 < 0 || db2 >= server.dbnum) return NULL;
 
-    int *result = zmalloc(2 * sizeof(int));
-    result[0] = (int)db1;
-    result[1] = (int)db2;
+    int *positions = zmalloc(2 * sizeof(int));
+    positions[0] = 1;
+    positions[1] = 2;
     *count = 2;
-    return result;
+    return positions;
 }
 
+/* See commandDbIdArgs in server.h. Returns argv[2] (the destination dbid).
+ * Caller should free the returned array. */
 int *moveDbIdArgs(robj **argv, int argc, int *count) {
     if (argc < 3) return NULL;
 
@@ -3047,23 +3071,52 @@ int *moveDbIdArgs(robj **argv, int argc, int *count) {
     if (getLongLongFromObject(argv[2], &dbid) != C_OK) return NULL;
     if (dbid < 0 || dbid >= server.dbnum) return NULL;
 
-    int *result = zmalloc(sizeof(int));
-    result[0] = (int)dbid;
+    int *positions = zmalloc(sizeof(int));
+    positions[0] = 2;
     *count = 1;
-    return result;
+    return positions;
 }
 
+/* COPY source destination [ DB destination-db ] [ REPLACE ]
+ *
+ * Note that the DB and REPLACE tokens are optional and order-independent.
+ * Also if the DB token appears more than once, copyCommand keeps overwriting
+ * the destination DB, so ACL must validate every occurrence: a permission
+ * check against only the first or only the last value would let a user craft
+ * 'COPY src dst DB <allowed> DB <denied>' (or vice versa) to bypass the ACL.
+ *
+ * See commandDbIdArgs in server.h. Returns the argv index of every DB clause's
+ * dbid in argv order, or NULL if no DB clause is present.
+ * Caller should free the returned array. */
 int *copyDbIdArgs(robj **argv, int argc, int *count) {
     if (argc < 5) return NULL;
 
-    if (strcasecmp(objectGetVal(argv[3]), "db") != 0) return NULL;
+    /* First pass: validate syntax and count DB clauses. */
+    int n = 0;
+    for (int j = 3; j < argc; j++) {
+        int additional = argc - j - 1;
+        if (!strcasecmp(objectGetVal(argv[j]), "replace")) {
+            continue;
+        } else if (!strcasecmp(objectGetVal(argv[j]), "db") && additional >= 1) {
+            long long dbid;
+            if (getLongLongFromObject(argv[j + 1], &dbid) != C_OK) return NULL;
+            if (dbid < 0 || dbid >= server.dbnum) return NULL;
+            n++;
+            j++;
+        } else {
+            return NULL;
+        }
+    }
+    if (n == 0) return NULL;
 
-    long long dbid;
-    if (getLongLongFromObject(argv[4], &dbid) != C_OK) return NULL;
-    if (dbid < 0 || dbid >= server.dbnum) return NULL;
-
-    int *result = zmalloc(sizeof(int));
-    result[0] = (int)dbid;
-    *count = 1;
-    return result;
+    /* Second pass: collect the argv positions of each DB clause's dbid. */
+    int *positions = zmalloc(n * sizeof(int));
+    *count = 0;
+    for (int j = 3; j < argc; j++) {
+        if (!strcasecmp(objectGetVal(argv[j]), "db")) {
+            positions[(*count)++] = j + 1;
+            j++;
+        }
+    }
+    return positions;
 }
