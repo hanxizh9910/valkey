@@ -34,6 +34,8 @@ proc check_log_backtrace_for_debug {log_pattern} {
             # Search for thread names (bio_*) which appear on all systems, including Alpine where
             # function names may not be resolved
             assert_equal [count_log_message 0 "bio_"] 5
+            # Verify at least one stack frame was emitted (format: #<n> 0x...)
+            assert_range [count_log_message 0 {#[0-9]+ 0x}] 1 999
         }
     }
 }
